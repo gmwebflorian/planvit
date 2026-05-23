@@ -29,7 +29,6 @@
   --color-accent-green: var(--accent-green);
   --color-accent-red: var(--accent-red);
   --font-sans: var(--font-inter);
-  --font-mono: var(--font-geist-mono);
 }
 
 html {
