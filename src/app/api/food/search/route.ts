@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 
 export interface FoodSearchResult {
   id: string
@@ -8,7 +9,31 @@ export interface FoodSearchResult {
   protein_per_100g: number
   carbs_per_100g: number
   fat_per_100g: number
-  source: 'off' | 'usda'
+  source: 'off' | 'usda' | 'ciqual'
+}
+
+async function searchCiqual(query: string): Promise<FoodSearchResult[]> {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+  const { data } = await supabase
+    .from('reference_foods')
+    .select('id, name, kcal, protein_g, carbs_g, fat_g')
+    .ilike('name', `%${query}%`)
+    .limit(8)
+
+  if (!data) return []
+  return data.map((f) => ({
+    id: `ciqual_${f.id}`,
+    name: f.name,
+    brand: null,
+    calories_per_100g: f.kcal,
+    protein_per_100g: f.protein_g,
+    carbs_per_100g: f.carbs_g,
+    fat_per_100g: f.fat_g,
+    source: 'ciqual' as const,
+  }))
 }
 
 async function searchOpenFoodFacts(query: string): Promise<FoodSearchResult[]> {
@@ -89,19 +114,21 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ results: [] })
   }
 
-  const [offResults, usdaResults] = await Promise.allSettled([
+  const [ciqualResults, offResults, usdaResults] = await Promise.allSettled([
+    searchCiqual(query),
     searchOpenFoodFacts(query),
     searchUSDA(query),
   ])
 
+  const ciqual = ciqualResults.status === 'fulfilled' ? ciqualResults.value : []
   const off = offResults.status === 'fulfilled' ? offResults.value : []
   const usda = usdaResults.status === 'fulfilled' ? usdaResults.value : []
 
-  // Merge: OFF first (branded products), then USDA (generic foods), deduplicate by name
+  // Ciqual en premier (aliments génériques FR), puis OFF (produits de marque), puis USDA
   const seen = new Set<string>()
   const merged: FoodSearchResult[] = []
 
-  for (const item of [...off, ...usda]) {
+  for (const item of [...ciqual, ...off, ...usda]) {
     const key = item.name.toLowerCase().slice(0, 30)
     if (!seen.has(key)) {
       seen.add(key)

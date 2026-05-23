@@ -25,16 +25,20 @@ function calcMacros(food: FoodSearchResult, qty: number) {
   }
 }
 
-function SourceBadge({ source }: { source: 'off' | 'usda' }) {
+const SOURCE_STYLE = {
+  ciqual: { bg: '#FF6B2B20', color: '#FF6B2B', label: 'Ciqual' },
+  usda:   { bg: '#3B82F620', color: '#3B82F6', label: 'USDA' },
+  off:    { bg: '#22C55E20', color: '#22C55E', label: 'OFF' },
+}
+
+function SourceBadge({ source }: { source: 'off' | 'usda' | 'ciqual' }) {
+  const s = SOURCE_STYLE[source]
   return (
     <span
       className="text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded shrink-0"
-      style={{
-        backgroundColor: source === 'usda' ? '#3B82F620' : '#22C55E20',
-        color: source === 'usda' ? '#3B82F6' : '#22C55E',
-      }}
+      style={{ backgroundColor: s.bg, color: s.color }}
     >
-      {source === 'usda' ? 'USDA' : 'OFF'}
+      {s.label}
     </span>
   )
 }
