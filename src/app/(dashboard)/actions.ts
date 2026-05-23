@@ -39,8 +39,39 @@ export async function addFoodEntry(input: AddFoodEntryInput) {
   })
 
   if (error) throw new Error(error.message)
-
   revalidatePath('/')
+}
+
+export interface CreateCustomFoodInput {
+  name: string
+  brand?: string
+  calories_per_100g: number
+  protein_per_100g: number
+  carbs_per_100g: number
+  fat_per_100g: number
+}
+
+export async function createCustomFood(input: CreateCustomFoodInput): Promise<string> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const { data, error } = await supabase
+    .from('custom_foods')
+    .insert({
+      user_id: user.id,
+      name: input.name,
+      brand: input.brand ?? null,
+      calories_per_100g: input.calories_per_100g,
+      protein_per_100g: input.protein_per_100g,
+      carbs_per_100g: input.carbs_per_100g,
+      fat_per_100g: input.fat_per_100g,
+    })
+    .select('id')
+    .single()
+
+  if (error) throw new Error(error.message)
+  return data.id
 }
 
 export async function deleteFoodEntry(id: string) {
