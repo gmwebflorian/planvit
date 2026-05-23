@@ -23,13 +23,13 @@ create policy "Reference foods are publicly readable"
 -- =============================================
 insert into public.reference_foods (name, category, kcal, protein_g, carbs_g, fat_g, fiber_g) values
 
--- ŒUFS
-('Œuf de poule entier, cru', 'Œufs', 148, 12.6, 0.7, 10.6, 0),
-('Blanc d''œuf de poule, cru', 'Œufs', 45, 10.9, 0.7, 0.2, 0),
-('Jaune d''œuf de poule, cru', 'Œufs', 327, 15.9, 0.5, 29.0, 0),
-('Œuf de poule entier, dur', 'Œufs', 155, 13.0, 0.7, 11.3, 0),
-('Œuf de poule entier, brouillé', 'Œufs', 166, 10.6, 1.3, 13.3, 0),
-('Omelette nature', 'Œufs', 185, 11.4, 0.7, 15.3, 0),
+-- OeUFS
+('Oeuf de poule entier, cru', 'Oeufs', 148, 12.6, 0.7, 10.6, 0),
+('Blanc d''oeuf de poule, cru', 'Oeufs', 45, 10.9, 0.7, 0.2, 0),
+('Jaune d''oeuf de poule, cru', 'Oeufs', 327, 15.9, 0.5, 29.0, 0),
+('Oeuf de poule entier, dur', 'Oeufs', 155, 13.0, 0.7, 11.3, 0),
+('Oeuf de poule entier, brouillé', 'Oeufs', 166, 10.6, 1.3, 13.3, 0),
+('Omelette nature', 'Oeufs', 185, 11.4, 0.7, 15.3, 0),
 
 -- VOLAILLES
 ('Poulet, blanc (filet), cru', 'Volailles', 108, 23.3, 0.0, 1.5, 0),
@@ -42,11 +42,11 @@ insert into public.reference_foods (name, category, kcal, protein_g, carbs_g, fa
 ('Canard, filet, cru', 'Volailles', 131, 22.1, 0.0, 4.6, 0),
 
 -- VIANDES BOVINES
-('Bœuf, steak, cru', 'Viandes', 175, 20.7, 0.0, 10.1, 0),
-('Bœuf, steak haché 5% MG, cru', 'Viandes', 121, 20.8, 0.0, 4.1, 0),
-('Bœuf, steak haché 15% MG, cru', 'Viandes', 225, 17.2, 0.0, 17.2, 0),
-('Bœuf, entrecôte, crue', 'Viandes', 218, 19.5, 0.0, 15.3, 0),
-('Bœuf, rôti, cuit', 'Viandes', 188, 30.0, 0.0, 7.4, 0),
+('Boeuf, steak, cru', 'Viandes', 175, 20.7, 0.0, 10.1, 0),
+('Boeuf, steak haché 5% MG, cru', 'Viandes', 121, 20.8, 0.0, 4.1, 0),
+('Boeuf, steak haché 15% MG, cru', 'Viandes', 225, 17.2, 0.0, 17.2, 0),
+('Boeuf, entrecôte, crue', 'Viandes', 218, 19.5, 0.0, 15.3, 0),
+('Boeuf, rôti, cuit', 'Viandes', 188, 30.0, 0.0, 7.4, 0),
 ('Veau, escalope, crue', 'Viandes', 107, 22.3, 0.0, 1.7, 0),
 
 -- VIANDES PORCINES
