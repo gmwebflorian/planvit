@@ -24,30 +24,31 @@ function norm(s: string) {
 function relevanceScore(name: string, query: string): number {
   const n = norm(name)
   const q = norm(query)
+  // Also match against singular form if query is plural
+  const qSingular = q.length > 3 && q.endsWith('s') ? q.slice(0, -1) : q
 
-  if (n === q) return 1000
+  const matchesExact  = n === q || n === qSingular
+  const matchesStart  = n.startsWith(q + ',') || n.startsWith(q + ' ') || n.startsWith(q + '(')
+                     || n.startsWith(qSingular + ',') || n.startsWith(qSingular + ' ') || n.startsWith(qSingular + '(')
+  const matchesPrefix = n.startsWith(q) || n.startsWith(qSingular)
+  const words         = n.split(/[\s,();\/\-]+/)
+  const firstWordExact = words[0] === q || words[0] === qSingular
+  const anyWordExact  = words.some((w) => w === q || w === qSingular)
+  const anyWordPrefix = words.some((w) => w.startsWith(q) || w.startsWith(qSingular))
+  const contains      = n.includes(q) || n.includes(qSingular)
 
-  // Starts with query followed by separator (e.g. "oeuf, dur")
-  if (n.startsWith(q + ',') || n.startsWith(q + ' ') || n.startsWith(q + '(')) return 700
+  let tier: number
+  if (matchesExact)    tier = 7
+  else if (matchesStart)  tier = 6
+  else if (matchesPrefix) tier = 5
+  else if (firstWordExact) tier = 4
+  else if (anyWordExact)  tier = 3
+  else if (anyWordPrefix) tier = 2
+  else if (contains)      tier = 1
+  else                    tier = 0
 
-  // Starts with query
-  if (n.startsWith(q)) return 600
-
-  // First word is an exact match
-  const words = n.split(/[\s,();\/\-]+/)
-  if (words[0] === q) return 500
-
-  // Any whole word is an exact match
-  if (words.some((w) => w === q)) return 400
-
-  // Any word starts with query
-  if (words.some((w) => w.startsWith(q))) return 300
-
-  // Contains query anywhere
-  if (n.includes(q)) return 200
-
-  // FTS match with no direct string hit — penalize longer names slightly
-  return Math.max(1, 100 - Math.floor(name.length / 5))
+  // Within each tier, shorter names rank higher (more specific results first)
+  return tier * 10000 - name.length
 }
 
 async function searchCiqual(query: string): Promise<FoodSearchResult[]> {
@@ -56,7 +57,11 @@ async function searchCiqual(query: string): Promise<FoodSearchResult[]> {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 
-  const [ftRes, ilikeRes] = await Promise.all([
+  // When the user types a plural (e.g. "oeufs"), also search the singular ("oeuf")
+  // because ilike('%oeufs%') misses entries like "Oeuf cru".
+  const singular = query.length > 3 && query.endsWith('s') ? query.slice(0, -1) : null
+
+  const queries = [
     supabase
       .from('reference_foods')
       .select('id, name, kcal, protein_g, carbs_g, fat_g')
@@ -67,14 +72,25 @@ async function searchCiqual(query: string): Promise<FoodSearchResult[]> {
       .select('id, name, kcal, protein_g, carbs_g, fat_g')
       .ilike('name', `%${query}%`)
       .limit(80),
-  ])
+    ...(singular
+      ? [supabase
+          .from('reference_foods')
+          .select('id, name, kcal, protein_g, carbs_g, fat_g')
+          .ilike('name', `%${singular}%`)
+          .limit(80)]
+      : []),
+  ]
+
+  const results = await Promise.all(queries)
 
   const seen = new Set<number>()
   const merged = []
-  for (const f of [...(ftRes.data ?? []), ...(ilikeRes.data ?? [])]) {
-    if (!seen.has(f.id)) {
-      seen.add(f.id)
-      merged.push(f)
+  for (const res of results) {
+    for (const f of res.data ?? []) {
+      if (!seen.has(f.id)) {
+        seen.add(f.id)
+        merged.push(f)
+      }
     }
   }
 
