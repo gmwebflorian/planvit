@@ -12,25 +12,61 @@ export interface FoodSearchResult {
   source: 'off' | 'ciqual'
 }
 
+// Normalize accents/ligatures for comparison
+function norm(s: string) {
+  return s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/['']/g, "'")
+}
+
+function relevanceScore(name: string, query: string): number {
+  const n = norm(name)
+  const q = norm(query)
+
+  if (n === q) return 1000
+
+  // Starts with query followed by separator (e.g. "oeuf, dur")
+  if (n.startsWith(q + ',') || n.startsWith(q + ' ') || n.startsWith(q + '(')) return 700
+
+  // Starts with query
+  if (n.startsWith(q)) return 600
+
+  // First word is an exact match
+  const words = n.split(/[\s,();\/\-]+/)
+  if (words[0] === q) return 500
+
+  // Any whole word is an exact match
+  if (words.some((w) => w === q)) return 400
+
+  // Any word starts with query
+  if (words.some((w) => w.startsWith(q))) return 300
+
+  // Contains query anywhere
+  if (n.includes(q)) return 200
+
+  // FTS match with no direct string hit — penalize longer names slightly
+  return Math.max(1, 100 - Math.floor(name.length / 5))
+}
+
 async function searchCiqual(query: string): Promise<FoodSearchResult[]> {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 
-  // Full-text search (French stemming + normalisation des accents/ligatures)
-  // + ilike en parallèle pour rattraper les cas non couverts par le FTS
   const [ftRes, ilikeRes] = await Promise.all([
     supabase
       .from('reference_foods')
       .select('id, name, kcal, protein_g, carbs_g, fat_g')
       .textSearch('name', query, { type: 'plain', config: 'french' })
-      .limit(8),
+      .limit(80),
     supabase
       .from('reference_foods')
       .select('id, name, kcal, protein_g, carbs_g, fat_g')
       .ilike('name', `%${query}%`)
-      .limit(8),
+      .limit(80),
   ])
 
   const seen = new Set<number>()
@@ -42,7 +78,7 @@ async function searchCiqual(query: string): Promise<FoodSearchResult[]> {
     }
   }
 
-  return merged.slice(0, 8).map((f) => ({
+  return merged.map((f) => ({
     id: `ciqual_${f.id}`,
     name: f.name,
     brand: null,
@@ -58,7 +94,7 @@ async function searchOpenFoodFacts(query: string): Promise<FoodSearchResult[]> {
   const url = new URL('https://world.openfoodfacts.org/cgi/search.pl')
   url.searchParams.set('search_terms', query)
   url.searchParams.set('json', '1')
-  url.searchParams.set('page_size', '15')
+  url.searchParams.set('page_size', '20')
   url.searchParams.set('fields', 'id,product_name,brands,nutriments')
   url.searchParams.set('search_simple', '1')
   url.searchParams.set('action', 'process')
@@ -88,7 +124,7 @@ async function searchOpenFoodFacts(query: string): Promise<FoodSearchResult[]> {
         source: 'off' as const,
       }
     })
-    .slice(0, 10)
+    .slice(0, 20)
 }
 
 export async function GET(request: NextRequest) {
@@ -105,16 +141,23 @@ export async function GET(request: NextRequest) {
   const ciqual = ciqualResults.status === 'fulfilled' ? ciqualResults.value : []
   const off = offResults.status === 'fulfilled' ? offResults.value : []
 
+  // Deduplicate by normalized name (first 40 chars)
   const seen = new Set<string>()
   const merged: FoodSearchResult[] = []
-
   for (const item of [...ciqual, ...off]) {
-    const key = item.name.toLowerCase().slice(0, 30)
+    const key = norm(item.name).slice(0, 40)
     if (!seen.has(key)) {
       seen.add(key)
       merged.push(item)
     }
   }
 
-  return NextResponse.json({ results: merged.slice(0, 20) })
+  // Sort by relevance — the full sorted list is returned; the client paginates locally
+  merged.sort((a, b) => {
+    const diff = relevanceScore(b.name, query) - relevanceScore(a.name, query)
+    if (diff !== 0) return diff
+    return a.name.length - b.name.length  // tiebreak: shorter name first
+  })
+
+  return NextResponse.json({ results: merged })
 }

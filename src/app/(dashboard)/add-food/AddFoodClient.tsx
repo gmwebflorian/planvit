@@ -14,6 +14,7 @@ const MEAL_LABELS: Record<MealType, string> = {
   snack: 'Collation',
 }
 const MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack']
+const PAGE_SIZE = 15
 
 function calcMacros(food: FoodSearchResult, qty: number) {
   const r = qty / 100
@@ -49,7 +50,9 @@ export default function AddFoodClient() {
 
   const [step, setStep] = useState<'search' | 'quantity' | 'create'>('search')
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<FoodSearchResult[]>([])
+  // allResults = full sorted list from API; displayCount = how many we show
+  const [allResults, setAllResults] = useState<FoodSearchResult[]>([])
+  const [displayCount, setDisplayCount] = useState(PAGE_SIZE)
   const [loading, setLoading] = useState(false)
   const [selected, setSelected] = useState<FoodSearchResult | null>(null)
   const [qty, setQty] = useState('100')
@@ -65,20 +68,22 @@ export default function AddFoodClient() {
 
   const inputRef = useRef<HTMLInputElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const sentinelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (step === 'search') inputRef.current?.focus()
   }, [step])
 
   const search = useCallback(async (q: string) => {
-    if (q.length < 2) { setResults([]); return }
+    if (q.length < 2) { setAllResults([]); setDisplayCount(PAGE_SIZE); return }
     setLoading(true)
     try {
       const res = await fetch(`/api/food/search?q=${encodeURIComponent(q)}`)
       const data = await res.json()
-      setResults(data.results ?? [])
+      setAllResults(data.results ?? [])
+      setDisplayCount(PAGE_SIZE)
     } catch {
-      setResults([])
+      setAllResults([])
     } finally {
       setLoading(false)
     }
@@ -86,9 +91,30 @@ export default function AddFoodClient() {
 
   const handleQueryChange = (val: string) => {
     setQuery(val)
+    setAllResults([])
+    setDisplayCount(PAGE_SIZE)
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => search(val), 400)
   }
+
+  // Infinite scroll via IntersectionObserver
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel || displayCount >= allResults.length) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setDisplayCount((c) => Math.min(c + PAGE_SIZE, allResults.length))
+        }
+      },
+      { threshold: 0.1 }
+    )
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [displayCount, allResults.length])
+
+  const visibleResults = allResults.slice(0, displayCount)
+  const hasMore = displayCount < allResults.length
 
   const handleSelect = (food: FoodSearchResult) => {
     setSelected(food)
@@ -312,7 +338,7 @@ export default function AddFoodClient() {
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 flex flex-col gap-2">
-        {results.map((food) => (
+        {visibleResults.map((food) => (
           <button key={food.id} onClick={() => handleSelect(food)}
             className="w-full flex items-center justify-between rounded-2xl px-4 py-3 text-left active:opacity-70"
             style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }}>
@@ -330,7 +356,15 @@ export default function AddFoodClient() {
           </button>
         ))}
 
-        {query.length >= 2 && !loading && results.length === 0 && (
+        {/* Sentinel pour le scroll infini */}
+        {hasMore && (
+          <div ref={sentinelRef} className="flex items-center justify-center py-4">
+            <div className="w-5 h-5 rounded-full border-2 animate-spin"
+              style={{ borderColor: '#2E2E2E', borderTopColor: '#A0A0A0' }} />
+          </div>
+        )}
+
+        {query.length >= 2 && !loading && allResults.length === 0 && (
           <div className="flex flex-col items-center gap-4 py-10">
             <p style={{ color: '#A0A0A0' }}>Aucun résultat pour « {query} »</p>
             <button onClick={handleOpenCreate}
@@ -342,7 +376,7 @@ export default function AddFoodClient() {
           </div>
         )}
 
-        {query.length >= 2 && !loading && results.length > 0 && (
+        {query.length >= 2 && !loading && allResults.length > 0 && !hasMore && (
           <button onClick={handleOpenCreate}
             className="flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-medium mt-1"
             style={{ backgroundColor: 'transparent', border: '1px dashed #2E2E2E', color: '#A0A0A0' }}>
