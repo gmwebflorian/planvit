@@ -26,19 +26,21 @@ function calcMacros(food: FoodSearchResult, qty: number) {
   }
 }
 
-const SOURCE_STYLE = {
+const SOURCE_STYLE: Record<string, { bg: string; color: string; label?: string }> = {
   ciqual: { bg: '#FF6B2B20', color: '#FF6B2B', label: 'Ciqual' },
   off:    { bg: '#22C55E20', color: '#22C55E', label: 'OFF' },
+  custom: { bg: '#A855F720', color: '#A855F7' },
 }
 
-function SourceBadge({ source }: { source: 'off' | 'ciqual' }) {
+function SourceBadge({ source, customLabel }: { source: 'off' | 'ciqual' | 'custom'; customLabel?: string }) {
   const s = SOURCE_STYLE[source]
+  const label = source === 'custom' ? (customLabel ?? 'Moi') : (s.label ?? source)
   return (
     <span
       className="text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded shrink-0"
       style={{ backgroundColor: s.bg, color: s.color }}
     >
-      {s.label}
+      {label}
     </span>
   )
 }
@@ -345,7 +347,7 @@ export default function AddFoodClient() {
             <div className="flex flex-col gap-0.5 min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <span className="font-medium truncate" style={{ color: '#FFFFFF' }}>{food.name}</span>
-                <SourceBadge source={food.source} />
+                <SourceBadge source={food.source} customLabel={food.customLabel} />
               </div>
               {food.brand && <span className="text-xs" style={{ color: '#A0A0A0' }}>{food.brand}</span>}
               <span className="text-xs tabular-nums" style={{ color: '#A0A0A0' }}>

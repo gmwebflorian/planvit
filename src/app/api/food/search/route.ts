@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { createClient as createServerClient } from '@/lib/supabase/server'
 
 export interface FoodSearchResult {
   id: string
@@ -9,7 +10,8 @@ export interface FoodSearchResult {
   protein_per_100g: number
   carbs_per_100g: number
   fat_per_100g: number
-  source: 'off' | 'ciqual'
+  source: 'off' | 'ciqual' | 'custom'
+  customLabel?: string
 }
 
 // Normalize accents/ligatures for comparison
@@ -24,31 +26,64 @@ function norm(s: string) {
 function relevanceScore(name: string, query: string): number {
   const n = norm(name)
   const q = norm(query)
-  // Also match against singular form if query is plural
   const qSingular = q.length > 3 && q.endsWith('s') ? q.slice(0, -1) : q
 
-  const matchesExact  = n === q || n === qSingular
-  const matchesStart  = n.startsWith(q + ',') || n.startsWith(q + ' ') || n.startsWith(q + '(')
-                     || n.startsWith(qSingular + ',') || n.startsWith(qSingular + ' ') || n.startsWith(qSingular + '(')
-  const matchesPrefix = n.startsWith(q) || n.startsWith(qSingular)
-  const words         = n.split(/[\s,();\/\-]+/)
+  const matchesExact   = n === q || n === qSingular
+  const matchesStart   = n.startsWith(q + ',') || n.startsWith(q + ' ') || n.startsWith(q + '(')
+                      || n.startsWith(qSingular + ',') || n.startsWith(qSingular + ' ') || n.startsWith(qSingular + '(')
+  const matchesPrefix  = n.startsWith(q) || n.startsWith(qSingular)
+  const words          = n.split(/[\s,();\/\-]+/)
   const firstWordExact = words[0] === q || words[0] === qSingular
-  const anyWordExact  = words.some((w) => w === q || w === qSingular)
-  const anyWordPrefix = words.some((w) => w.startsWith(q) || w.startsWith(qSingular))
-  const contains      = n.includes(q) || n.includes(qSingular)
+  const anyWordExact   = words.some((w) => w === q || w === qSingular)
+  const anyWordPrefix  = words.some((w) => w.startsWith(q) || w.startsWith(qSingular))
+  const contains       = n.includes(q) || n.includes(qSingular)
 
   let tier: number
-  if (matchesExact)    tier = 7
-  else if (matchesStart)  tier = 6
-  else if (matchesPrefix) tier = 5
+  if (matchesExact)     tier = 7
+  else if (matchesStart)   tier = 6
+  else if (matchesPrefix)  tier = 5
   else if (firstWordExact) tier = 4
-  else if (anyWordExact)  tier = 3
-  else if (anyWordPrefix) tier = 2
-  else if (contains)      tier = 1
-  else                    tier = 0
+  else if (anyWordExact)   tier = 3
+  else if (anyWordPrefix)  tier = 2
+  else if (contains)       tier = 1
+  else                     tier = 0
 
-  // Within each tier, shorter names rank higher (more specific results first)
+  // Within each tier, shorter names rank higher
   return tier * 10000 - name.length
+}
+
+async function searchCustomFoods(query: string): Promise<FoodSearchResult[]> {
+  const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const meta = user.user_metadata ?? {}
+  const firstName: string =
+    meta.given_name ||
+    (meta.full_name ?? meta.name ?? '').split(' ')[0] ||
+    'Moi'
+
+  const singular = query.length > 3 && query.endsWith('s') ? query.slice(0, -1) : null
+  const pattern = singular ? `%${singular}%` : `%${query}%`
+
+  const { data } = await supabase
+    .from('custom_foods')
+    .select('id, name, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g')
+    .eq('user_id', user.id)
+    .or(`name.ilike.%${query}%${singular ? `,name.ilike.${pattern}` : ''}`)
+    .limit(20)
+
+  return (data ?? []).map((f) => ({
+    id: f.id,
+    name: f.name,
+    brand: null,
+    calories_per_100g: f.calories_per_100g,
+    protein_per_100g: f.protein_per_100g,
+    carbs_per_100g: f.carbs_per_100g,
+    fat_per_100g: f.fat_per_100g,
+    source: 'custom' as const,
+    customLabel: firstName,
+  }))
 }
 
 async function searchCiqual(query: string): Promise<FoodSearchResult[]> {
@@ -57,8 +92,6 @@ async function searchCiqual(query: string): Promise<FoodSearchResult[]> {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 
-  // When the user types a plural (e.g. "oeufs"), also search the singular ("oeuf")
-  // because ilike('%oeufs%') misses entries like "Oeuf cru".
   const singular = query.length > 3 && query.endsWith('s') ? query.slice(0, -1) : null
 
   const queries = [
@@ -149,17 +182,25 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ results: [] })
   }
 
-  const [ciqualResults, offResults] = await Promise.allSettled([
+  const [customResults, ciqualResults, offResults] = await Promise.allSettled([
+    searchCustomFoods(query),
     searchCiqual(query),
     searchOpenFoodFacts(query),
   ])
 
+  const custom = customResults.status === 'fulfilled' ? customResults.value : []
   const ciqual = ciqualResults.status === 'fulfilled' ? ciqualResults.value : []
-  const off = offResults.status === 'fulfilled' ? offResults.value : []
+  const off    = offResults.status   === 'fulfilled' ? offResults.value    : []
 
-  // Deduplicate by normalized name (first 40 chars)
+  // Custom foods first (always), then Ciqual + OFF deduplicated and ranked
   const seen = new Set<string>()
   const merged: FoodSearchResult[] = []
+
+  for (const item of custom) {
+    seen.add(norm(item.name).slice(0, 40))
+    merged.push(item)
+  }
+
   for (const item of [...ciqual, ...off]) {
     const key = norm(item.name).slice(0, 40)
     if (!seen.has(key)) {
@@ -168,12 +209,11 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Sort by relevance — the full sorted list is returned; the client paginates locally
-  merged.sort((a, b) => {
-    const diff = relevanceScore(b.name, query) - relevanceScore(a.name, query)
-    if (diff !== 0) return diff
-    return a.name.length - b.name.length  // tiebreak: shorter name first
-  })
+  // Sort: custom foods stay at top, rest sorted by relevance
+  const customItems  = merged.filter((r) => r.source === 'custom')
+  const otherItems   = merged.filter((r) => r.source !== 'custom')
 
-  return NextResponse.json({ results: merged })
+  otherItems.sort((a, b) => relevanceScore(b.name, query) - relevanceScore(a.name, query))
+
+  return NextResponse.json({ results: [...customItems, ...otherItems] })
 }
