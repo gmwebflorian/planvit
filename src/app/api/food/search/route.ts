@@ -17,14 +17,32 @@ async function searchCiqual(query: string): Promise<FoodSearchResult[]> {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
-  const { data } = await supabase
-    .from('reference_foods')
-    .select('id, name, kcal, protein_g, carbs_g, fat_g')
-    .ilike('name', `%${query}%`)
-    .limit(8)
 
-  if (!data) return []
-  return data.map((f) => ({
+  // Full-text search (French stemming + normalisation des accents/ligatures)
+  // + ilike en parallèle pour rattraper les cas non couverts par le FTS
+  const [ftRes, ilikeRes] = await Promise.all([
+    supabase
+      .from('reference_foods')
+      .select('id, name, kcal, protein_g, carbs_g, fat_g')
+      .textSearch('name', query, { type: 'plain', config: 'french' })
+      .limit(8),
+    supabase
+      .from('reference_foods')
+      .select('id, name, kcal, protein_g, carbs_g, fat_g')
+      .ilike('name', `%${query}%`)
+      .limit(8),
+  ])
+
+  const seen = new Set<number>()
+  const merged = []
+  for (const f of [...(ftRes.data ?? []), ...(ilikeRes.data ?? [])]) {
+    if (!seen.has(f.id)) {
+      seen.add(f.id)
+      merged.push(f)
+    }
+  }
+
+  return merged.slice(0, 8).map((f) => ({
     id: `ciqual_${f.id}`,
     name: f.name,
     brand: null,
