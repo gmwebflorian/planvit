@@ -1,4 +1,6 @@
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
+import { BarChart2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getProfile, getDayEntries, getDayStravaCalories } from '@/lib/supabase/queries'
 import MealSection from '@/components/MealSection'
@@ -40,6 +42,19 @@ export default async function JournalPage({
 
   return (
     <div className="flex flex-col gap-4 pt-3">
+
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-4 pt-1">
+        <h1 className="text-xl font-bold" style={{ color: '#FFFFFF' }}>Journal</h1>
+        <Link
+          href="/history"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium"
+          style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E', color: '#A0A0A0' }}
+        >
+          <BarChart2 size={14} />
+          Historique
+        </Link>
+      </div>
 
       {/* Date navigation */}
       <DateNav date={date} />
