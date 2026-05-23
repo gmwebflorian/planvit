@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Search, ArrowLeft, Plus, ChevronRight } from 'lucide-react'
 import type { FoodSearchResult } from '@/app/api/food/search/route'
 import type { MealType } from '@/types'
+import { addFoodEntry } from '@/app/(dashboard)/actions'
 
 const MEAL_LABELS: Record<MealType, string> = {
   breakfast: 'Petit-déjeuner',
@@ -79,11 +80,18 @@ export default function AddFoodClient() {
     setSaving(true)
     const macros = calcMacros(selected, qtyNum)
 
-    // TODO: remplacer par un appel Supabase réel
-    console.log('Saving entry:', { meal, food: selected.name, qty: qtyNum, ...macros })
-    await new Promise((r) => setTimeout(r, 500))
-    setSaving(false)
-    router.push('/')
+    try {
+      await addFoodEntry({
+        meal_type: meal,
+        food_name: selected.name,
+        quantity_g: qtyNum,
+        ...macros,
+      })
+      router.push('/')
+      router.refresh()
+    } catch {
+      setSaving(false)
+    }
   }
 
   const macros = selected && qty ? calcMacros(selected, parseFloat(qty) || 0) : null

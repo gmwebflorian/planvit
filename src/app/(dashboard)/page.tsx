@@ -1,56 +1,12 @@
+import { redirect } from 'next/navigation'
 import { Settings } from 'lucide-react'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/server'
+import { getProfile, getDayEntries, getDayStravaCalories } from '@/lib/supabase/queries'
 import CalorieRing from '@/components/CalorieRing'
 import MacroBar from '@/components/MacroBar'
 import MealSection from '@/components/MealSection'
-import type { FoodEntry, MealType } from '@/types'
-
-// Mock data — à remplacer par les vraies données Supabase
-const MOCK_PROFILE = {
-  full_name: 'Florian',
-  avatar_url: null,
-  goal_calories: 2000,
-  goal_protein_g: 170,
-  goal_carbs_g: 190,
-  goal_fat_g: 65,
-}
-
-const MOCK_ENTRIES: FoodEntry[] = [
-  {
-    id: '1',
-    user_id: 'u1',
-    date: new Date().toISOString().split('T')[0],
-    meal_type: 'breakfast',
-    food_name: 'Wrap œufs-poulet-skyr',
-    quantity_g: 1,
-    calories: 508,
-    protein_g: 37,
-    carbs_g: 38,
-    fat_g: 23,
-    fiber_g: null,
-    custom_food_id: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    user_id: 'u1',
-    date: new Date().toISOString().split('T')[0],
-    meal_type: 'lunch',
-    food_name: 'Poulet grillé',
-    quantity_g: 200,
-    calories: 330,
-    protein_g: 62,
-    carbs_g: 0,
-    fat_g: 8,
-    fiber_g: null,
-    custom_food_id: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-]
-
-const MOCK_STRAVA_CALORIES = 350
+import type { MealType } from '@/types'
 
 const MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack']
 
@@ -62,11 +18,20 @@ function formatDate(date: Date): string {
   })
 }
 
-export default function DashboardPage() {
-  const today = new Date()
-  const profile = MOCK_PROFILE
-  const entries = MOCK_ENTRIES
-  const stravaCalories = MOCK_STRAVA_CALORIES
+export default async function DashboardPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const today = new Date().toISOString().split('T')[0]
+
+  const [profile, entries, stravaCalories] = await Promise.all([
+    getProfile(supabase, user.id),
+    getDayEntries(supabase, user.id, today),
+    getDayStravaCalories(supabase, user.id, today),
+  ])
+
+  if (!profile) redirect('/login')
 
   const totalCalories = entries.reduce((s, e) => s + e.calories, 0)
   const totalProtein = entries.reduce((s, e) => s + e.protein_g, 0)
@@ -75,7 +40,9 @@ export default function DashboardPage() {
 
   const initials = profile.full_name
     ? profile.full_name.slice(0, 1).toUpperCase()
-    : '?'
+    : user.email?.slice(0, 1).toUpperCase() ?? '?'
+
+  const displayName = profile.full_name ?? user.email ?? 'toi'
 
   return (
     <div className="flex flex-col gap-5 px-4 pt-5">
@@ -83,18 +50,26 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div
-            className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
-            style={{ backgroundColor: '#FF6B2B', color: '#FFFFFF' }}
-          >
-            {initials}
-          </div>
+          {profile.avatar_url ? (
+            <img
+              src={profile.avatar_url}
+              alt={displayName}
+              className="w-10 h-10 rounded-full object-cover shrink-0"
+            />
+          ) : (
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
+              style={{ backgroundColor: '#FF6B2B', color: '#FFFFFF' }}
+            >
+              {initials}
+            </div>
+          )}
           <div className="flex flex-col">
             <span className="font-semibold leading-tight" style={{ color: '#FFFFFF' }}>
-              Bonjour, {profile.full_name} 👋
+              Bonjour, {displayName} 👋
             </span>
             <span className="text-xs capitalize" style={{ color: '#A0A0A0' }}>
-              {formatDate(today)}
+              {formatDate(new Date())}
             </span>
           </div>
         </div>
@@ -109,9 +84,9 @@ export default function DashboardPage() {
         style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }}
       >
         <CalorieRing
-          consumed={totalCalories}
+          consumed={Math.round(totalCalories)}
           goal={profile.goal_calories ?? 2000}
-          burned={stravaCalories}
+          burned={Math.round(stravaCalories)}
         />
       </div>
 
@@ -123,19 +98,19 @@ export default function DashboardPage() {
         <span className="font-semibold" style={{ color: '#FFFFFF' }}>Macronutriments</span>
         <MacroBar
           label="🟠 Protéines"
-          current={totalProtein}
+          current={Math.round(totalProtein)}
           goal={profile.goal_protein_g ?? 170}
           color="#FF6B2B"
         />
         <MacroBar
           label="🔵 Glucides"
-          current={totalCarbs}
+          current={Math.round(totalCarbs)}
           goal={profile.goal_carbs_g ?? 190}
           color="#3B82F6"
         />
         <MacroBar
           label="🟡 Lipides"
-          current={totalFat}
+          current={Math.round(totalFat)}
           goal={profile.goal_fat_g ?? 65}
           color="#EAB308"
         />
