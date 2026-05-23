@@ -9,7 +9,7 @@ export interface FoodSearchResult {
   protein_per_100g: number
   carbs_per_100g: number
   fat_per_100g: number
-  source: 'off' | 'usda' | 'ciqual'
+  source: 'off' | 'ciqual'
 }
 
 async function searchCiqual(query: string): Promise<FoodSearchResult[]> {
@@ -73,62 +73,24 @@ async function searchOpenFoodFacts(query: string): Promise<FoodSearchResult[]> {
     .slice(0, 10)
 }
 
-async function searchUSDA(query: string): Promise<FoodSearchResult[]> {
-  const apiKey = process.env.USDA_API_KEY ?? 'DEMO_KEY'
-  const url = new URL('https://api.nal.usda.gov/fdc/v1/foods/search')
-  url.searchParams.set('query', query)
-  url.searchParams.set('api_key', apiKey)
-  url.searchParams.set('dataType', 'Foundation,SR Legacy')
-  url.searchParams.set('pageSize', '10')
-
-  const res = await fetch(url.toString(), { next: { revalidate: 3600 } })
-  if (!res.ok) return []
-
-  const data = await res.json()
-
-  return (data.foods ?? [])
-    .map((f: Record<string, unknown>) => {
-      const nutrients = (f.foodNutrients as Array<{ nutrientId: number; value: number }>) ?? []
-      const get = (id: number) => nutrients.find((n) => n.nutrientId === id)?.value ?? 0
-
-      const kcal = Math.round(get(1008))
-      if (kcal === 0) return null
-
-      return {
-        id: `usda_${f.fdcId}`,
-        name: String(f.description),
-        brand: null,
-        calories_per_100g: kcal,
-        protein_per_100g: Math.round(get(1003) * 10) / 10,
-        carbs_per_100g: Math.round(get(1005) * 10) / 10,
-        fat_per_100g: Math.round(get(1004) * 10) / 10,
-        source: 'usda' as const,
-      }
-    })
-    .filter(Boolean) as FoodSearchResult[]
-}
-
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get('q')?.trim()
   if (!query || query.length < 2) {
     return NextResponse.json({ results: [] })
   }
 
-  const [ciqualResults, offResults, usdaResults] = await Promise.allSettled([
+  const [ciqualResults, offResults] = await Promise.allSettled([
     searchCiqual(query),
     searchOpenFoodFacts(query),
-    searchUSDA(query),
   ])
 
   const ciqual = ciqualResults.status === 'fulfilled' ? ciqualResults.value : []
   const off = offResults.status === 'fulfilled' ? offResults.value : []
-  const usda = usdaResults.status === 'fulfilled' ? usdaResults.value : []
 
-  // Ciqual en premier (aliments génériques FR), puis OFF (produits de marque), puis USDA
   const seen = new Set<string>()
   const merged: FoodSearchResult[] = []
 
-  for (const item of [...ciqual, ...off, ...usda]) {
+  for (const item of [...ciqual, ...off]) {
     const key = item.name.toLowerCase().slice(0, 30)
     if (!seen.has(key)) {
       seen.add(key)

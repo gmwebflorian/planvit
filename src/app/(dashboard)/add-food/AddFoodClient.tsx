@@ -27,11 +27,10 @@ function calcMacros(food: FoodSearchResult, qty: number) {
 
 const SOURCE_STYLE = {
   ciqual: { bg: '#FF6B2B20', color: '#FF6B2B', label: 'Ciqual' },
-  usda:   { bg: '#3B82F620', color: '#3B82F6', label: 'USDA' },
   off:    { bg: '#22C55E20', color: '#22C55E', label: 'OFF' },
 }
 
-function SourceBadge({ source }: { source: 'off' | 'usda' | 'ciqual' }) {
+function SourceBadge({ source }: { source: 'off' | 'ciqual' }) {
   const s = SOURCE_STYLE[source]
   return (
     <span
