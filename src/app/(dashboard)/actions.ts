@@ -56,6 +56,12 @@ export async function createCustomFood(input: CreateCustomFoodInput): Promise<st
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const meta = user.user_metadata ?? {}
+  const creatorName: string =
+    meta.given_name ||
+    (meta.full_name ?? meta.name ?? '').split(' ')[0] ||
+    'Utilisateur'
+
   const { data, error } = await supabase
     .from('custom_foods')
     .insert({
@@ -66,6 +72,7 @@ export async function createCustomFood(input: CreateCustomFoodInput): Promise<st
       protein_per_100g: input.protein_per_100g,
       carbs_per_100g: input.carbs_per_100g,
       fat_per_100g: input.fat_per_100g,
+      creator_name: creatorName,
     })
     .select('id')
     .single()

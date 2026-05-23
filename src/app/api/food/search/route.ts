@@ -54,23 +54,19 @@ function relevanceScore(name: string, query: string): number {
 
 async function searchCustomFoods(query: string): Promise<FoodSearchResult[]> {
   const supabase = await createServerClient()
+  // Require authentication — but search ALL users' custom foods
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
-  const meta = user.user_metadata ?? {}
-  const firstName: string =
-    meta.given_name ||
-    (meta.full_name ?? meta.name ?? '').split(' ')[0] ||
-    'Moi'
-
   const singular = query.length > 3 && query.endsWith('s') ? query.slice(0, -1) : null
-  const pattern = singular ? `%${singular}%` : `%${query}%`
+  const orFilter = singular
+    ? `name.ilike.%${query}%,name.ilike.%${singular}%`
+    : `name.ilike.%${query}%`
 
   const { data } = await supabase
     .from('custom_foods')
-    .select('id, name, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g')
-    .eq('user_id', user.id)
-    .or(`name.ilike.%${query}%${singular ? `,name.ilike.${pattern}` : ''}`)
+    .select('id, name, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, creator_name')
+    .or(orFilter)
     .limit(20)
 
   return (data ?? []).map((f) => ({
@@ -82,7 +78,7 @@ async function searchCustomFoods(query: string): Promise<FoodSearchResult[]> {
     carbs_per_100g: f.carbs_per_100g,
     fat_per_100g: f.fat_per_100g,
     source: 'custom' as const,
-    customLabel: firstName,
+    customLabel: f.creator_name ?? 'Utilisateur',
   }))
 }
 
