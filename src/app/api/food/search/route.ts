@@ -52,6 +52,36 @@ function relevanceScore(name: string, query: string): number {
   return tier * 10000 - name.length
 }
 
+async function searchFavorites(query: string): Promise<FoodSearchResult[]> {
+  const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const singular = query.length > 3 && query.endsWith('s') ? query.slice(0, -1) : null
+  const orFilter = singular
+    ? `food_name.ilike.%${query}%,food_name.ilike.%${singular}%`
+    : `food_name.ilike.%${query}%`
+
+  const { data } = await supabase
+    .from('favorites')
+    .select('food_name, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, brand, source, custom_label')
+    .eq('user_id', user.id)
+    .or(orFilter)
+    .order('created_at', { ascending: false })
+
+  return (data ?? []).map((f) => ({
+    id: `fav_${f.food_name}`,
+    name: f.food_name,
+    brand: f.brand ?? null,
+    calories_per_100g: f.calories_per_100g,
+    protein_per_100g:  f.protein_per_100g,
+    carbs_per_100g:    f.carbs_per_100g,
+    fat_per_100g:      f.fat_per_100g,
+    source: (f.source as 'ciqual' | 'off' | 'custom') ?? 'ciqual',
+    customLabel: f.custom_label ?? undefined,
+  }))
+}
+
 async function searchCustomFoods(query: string): Promise<FoodSearchResult[]> {
   const supabase = await createServerClient()
   // Require authentication — but search ALL users' custom foods
@@ -178,38 +208,40 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ results: [] })
   }
 
-  const [customResults, ciqualResults, offResults] = await Promise.allSettled([
+  const [favResults, customResults, ciqualResults, offResults] = await Promise.allSettled([
+    searchFavorites(query),
     searchCustomFoods(query),
     searchCiqual(query),
     searchOpenFoodFacts(query),
   ])
 
+  const favs   = favResults.status    === 'fulfilled' ? favResults.value    : []
   const custom = customResults.status === 'fulfilled' ? customResults.value : []
   const ciqual = ciqualResults.status === 'fulfilled' ? ciqualResults.value : []
-  const off    = offResults.status   === 'fulfilled' ? offResults.value    : []
+  const off    = offResults.status    === 'fulfilled' ? offResults.value    : []
 
-  // Custom foods first (always), then Ciqual + OFF deduplicated and ranked
+  // Priority: favorites → custom → ciqual/OFF (deduplicated by name)
   const seen = new Set<string>()
-  const merged: FoodSearchResult[] = []
+  const pinned: FoodSearchResult[] = []
 
-  for (const item of custom) {
+  for (const item of favs) {
     seen.add(norm(item.name).slice(0, 40))
-    merged.push(item)
+    pinned.push(item)
   }
 
+  const customUnique: FoodSearchResult[] = []
+  for (const item of custom) {
+    const key = norm(item.name).slice(0, 40)
+    if (!seen.has(key)) { seen.add(key); customUnique.push(item) }
+  }
+
+  const rest: FoodSearchResult[] = []
   for (const item of [...ciqual, ...off]) {
     const key = norm(item.name).slice(0, 40)
-    if (!seen.has(key)) {
-      seen.add(key)
-      merged.push(item)
-    }
+    if (!seen.has(key)) { seen.add(key); rest.push(item) }
   }
 
-  // Sort: custom foods stay at top, rest sorted by relevance
-  const customItems  = merged.filter((r) => r.source === 'custom')
-  const otherItems   = merged.filter((r) => r.source !== 'custom')
+  rest.sort((a, b) => relevanceScore(b.name, query) - relevanceScore(a.name, query))
 
-  otherItems.sort((a, b) => relevanceScore(b.name, query) - relevanceScore(a.name, query))
-
-  return NextResponse.json({ results: [...customItems, ...otherItems] })
+  return NextResponse.json({ results: [...pinned, ...customUnique, ...rest] })
 }
