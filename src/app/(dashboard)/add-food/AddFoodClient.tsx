@@ -23,6 +23,7 @@ function calcMacros(food: FoodSearchResult, qty: number) {
     protein_g: Math.round(food.protein_per_100g * r * 10) / 10,
     carbs_g: Math.round(food.carbs_per_100g * r * 10) / 10,
     fat_g: Math.round(food.fat_per_100g * r * 10) / 10,
+    fiber_g: food.fiber_per_100g != null ? Math.round(food.fiber_per_100g * r * 10) / 10 : null,
   }
 }
 
@@ -74,6 +75,7 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
   const [createProt, setCreateProt] = useState('')
   const [createCarbs, setCreateCarbs] = useState('')
   const [createFat, setCreateFat] = useState('')
+  const [createFiber, setCreateFiber] = useState('')
 
   const inputRef = useRef<HTMLInputElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -153,6 +155,7 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
     setCreateProt('')
     setCreateCarbs('')
     setCreateFat('')
+    setCreateFiber('')
     setStep('create')
   }
 
@@ -161,12 +164,14 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
     if (!createName.trim() || isNaN(cal) || cal <= 0) return
     setSaving(true)
     try {
+      const fiber = createFiber ? parseFloat(createFiber) : null
       const id = await createCustomFood({
         name: createName.trim(),
         calories_per_100g: cal,
         protein_per_100g: parseFloat(createProt) || 0,
         carbs_per_100g: parseFloat(createCarbs) || 0,
         fat_per_100g: parseFloat(createFat) || 0,
+        fiber_per_100g: fiber,
       })
       const food: FoodSearchResult = {
         id,
@@ -176,7 +181,8 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
         protein_per_100g: parseFloat(createProt) || 0,
         carbs_per_100g: parseFloat(createCarbs) || 0,
         fat_per_100g: parseFloat(createFat) || 0,
-        source: 'off',
+        fiber_per_100g: fiber,
+        source: 'custom',
       }
       setSelected(food)
       setStep('quantity')
@@ -226,6 +232,7 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
             { label: 'Protéines (g / 100g)', value: createProt, set: setCreateProt, type: 'number', placeholder: '12' },
             { label: 'Glucides (g / 100g)', value: createCarbs, set: setCreateCarbs, type: 'number', placeholder: '0' },
             { label: 'Lipides (g / 100g)', value: createFat, set: setCreateFat, type: 'number', placeholder: '10' },
+            { label: 'Fibres (g / 100g)', value: createFiber, set: setCreateFiber, type: 'number', placeholder: '0' },
           ].map(({ label, value, set, type, placeholder }) => (
             <div key={label} className="flex flex-col gap-1.5">
               <label className="text-xs font-medium uppercase tracking-wide" style={{ color: '#A0A0A0' }}>{label}</label>
@@ -270,7 +277,7 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
             <p className="font-semibold" style={{ color: '#FFFFFF' }}>{selected.name}</p>
             {selected.brand && <p className="text-sm mt-0.5" style={{ color: '#A0A0A0' }}>{selected.brand}</p>}
             <p className="text-xs mt-2" style={{ color: '#A0A0A0' }}>
-              Pour 100g : {selected.calories_per_100g} kcal · {selected.protein_per_100g}g P · {selected.carbs_per_100g}g G · {selected.fat_per_100g}g L
+              Pour 100g : {selected.calories_per_100g} kcal · {selected.protein_per_100g}g P · {selected.carbs_per_100g}g G · {selected.fat_per_100g}g L{selected.fiber_per_100g != null ? ` · ${selected.fiber_per_100g}g F` : ''}
             </p>
           </div>
 
@@ -301,10 +308,11 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
             <div className="rounded-2xl p-4" style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }}>
               <div className="flex items-center justify-between">
                 <span className="text-2xl font-bold tabular-nums" style={{ color: '#FF6B2B' }}>{macros.calories} kcal</span>
-                <div className="flex gap-3 text-sm tabular-nums">
+                <div className="flex gap-3 text-sm tabular-nums flex-wrap">
                   <span style={{ color: '#FF6B2B' }}>{macros.protein_g}g P</span>
                   <span style={{ color: '#3B82F6' }}>{macros.carbs_g}g G</span>
                   <span style={{ color: '#EAB308' }}>{macros.fat_g}g L</span>
+                  {macros.fiber_g != null && <span style={{ color: '#10B981' }}>{macros.fiber_g}g F</span>}
                 </div>
               </div>
             </div>
@@ -376,7 +384,7 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
               </div>
               {food.brand && <span className="text-xs" style={{ color: '#A0A0A0' }}>{food.brand}</span>}
               <span className="text-xs tabular-nums" style={{ color: '#A0A0A0' }}>
-                {food.calories_per_100g} kcal · {food.protein_per_100g}g P · {food.carbs_per_100g}g G · {food.fat_per_100g}g L
+                {food.calories_per_100g} kcal · {food.protein_per_100g}g P · {food.carbs_per_100g}g G · {food.fat_per_100g}g L{food.fiber_per_100g != null ? ` · ${food.fiber_per_100g}g F` : ''}
               </span>
             </div>
             <ChevronRight size={18} color="#A0A0A0" className="shrink-0 ml-2" />
@@ -429,7 +437,7 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
                   </div>
                   {food.brand && <span className="text-xs" style={{ color: '#A0A0A0' }}>{food.brand}</span>}
                   <span className="text-xs tabular-nums" style={{ color: '#A0A0A0' }}>
-                    {food.calories_per_100g} kcal · {food.protein_per_100g}g P · {food.carbs_per_100g}g G · {food.fat_per_100g}g L
+                    {food.calories_per_100g} kcal · {food.protein_per_100g}g P · {food.carbs_per_100g}g G · {food.fat_per_100g}g L{food.fiber_per_100g != null ? ` · ${food.fiber_per_100g}g F` : ''}
                   </span>
                 </div>
                 <ChevronRight size={18} color="#A0A0A0" className="shrink-0 ml-2" />

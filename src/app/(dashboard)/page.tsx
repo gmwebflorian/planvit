@@ -37,6 +37,7 @@ export default async function DashboardPage() {
   const totalProtein = entries.reduce((s, e) => s + e.protein_g, 0)
   const totalCarbs = entries.reduce((s, e) => s + e.carbs_g, 0)
   const totalFat = entries.reduce((s, e) => s + e.fat_g, 0)
+  const totalFiber = entries.reduce((s, e) => s + (e.fiber_g ?? 0), 0)
 
   const initials = profile.full_name
     ? profile.full_name.slice(0, 1).toUpperCase()
@@ -113,6 +114,12 @@ export default async function DashboardPage() {
           current={Math.round(totalFat)}
           goal={profile.goal_fat_g ?? 65}
           color="#EAB308"
+        />
+        <MacroBar
+          label="🟢 Fibres"
+          current={Math.round(totalFiber * 10) / 10}
+          goal={profile.goal_fiber_g ?? 25}
+          color="#10B981"
         />
       </div>
 

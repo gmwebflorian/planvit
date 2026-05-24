@@ -15,6 +15,7 @@ export interface UserProfile {
   goal_protein_g: number | null
   goal_carbs_g: number | null
   goal_fat_g: number | null
+  goal_fiber_g: number | null
   strava_athlete_id: number | null
   strava_access_token: string | null
   strava_refresh_token: string | null

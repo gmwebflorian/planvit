@@ -15,6 +15,7 @@ interface UpdateProfileInput {
   goal_protein_g?: number | null
   goal_carbs_g?: number | null
   goal_fat_g?: number | null
+  goal_fiber_g?: number | null
 }
 
 export async function updateProfile(input: UpdateProfileInput) {

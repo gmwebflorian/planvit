@@ -10,6 +10,7 @@ export interface FoodSearchResult {
   protein_per_100g: number
   carbs_per_100g: number
   fat_per_100g: number
+  fiber_per_100g: number | null
   source: 'off' | 'ciqual' | 'custom'
   customLabel?: string
   isFavorite?: boolean
@@ -67,7 +68,7 @@ async function searchCustomFoods(query: string): Promise<FoodSearchResult[]> {
 
   const { data } = await supabase
     .from('custom_foods')
-    .select('id, name, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, creator_name')
+    .select('id, name, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, creator_name')
     .or(orFilter)
     .limit(20)
 
@@ -79,6 +80,7 @@ async function searchCustomFoods(query: string): Promise<FoodSearchResult[]> {
     protein_per_100g: f.protein_per_100g,
     carbs_per_100g: f.carbs_per_100g,
     fat_per_100g: f.fat_per_100g,
+    fiber_per_100g: f.fiber_per_100g ?? null,
     source: 'custom' as const,
     customLabel: f.creator_name ?? 'Utilisateur',
   }))
@@ -95,18 +97,18 @@ async function searchCiqual(query: string): Promise<FoodSearchResult[]> {
   const queries = [
     supabase
       .from('reference_foods')
-      .select('id, name, kcal, protein_g, carbs_g, fat_g')
+      .select('id, name, kcal, protein_g, carbs_g, fat_g, fiber_g')
       .textSearch('name', query, { type: 'plain', config: 'french' })
       .limit(80),
     supabase
       .from('reference_foods')
-      .select('id, name, kcal, protein_g, carbs_g, fat_g')
+      .select('id, name, kcal, protein_g, carbs_g, fat_g, fiber_g')
       .ilike('name', `%${query}%`)
       .limit(80),
     ...(singular
       ? [supabase
           .from('reference_foods')
-          .select('id, name, kcal, protein_g, carbs_g, fat_g')
+          .select('id, name, kcal, protein_g, carbs_g, fat_g, fiber_g')
           .ilike('name', `%${singular}%`)
           .limit(80)]
       : []),
@@ -133,6 +135,7 @@ async function searchCiqual(query: string): Promise<FoodSearchResult[]> {
     protein_per_100g: f.protein_g,
     carbs_per_100g: f.carbs_g,
     fat_per_100g: f.fat_g,
+    fiber_per_100g: f.fiber_g ?? null,
     source: 'ciqual' as const,
   }))
 }
@@ -168,6 +171,7 @@ async function searchOpenFoodFacts(query: string): Promise<FoodSearchResult[]> {
         protein_per_100g: Math.round((n['proteins_100g'] ?? 0) * 10) / 10,
         carbs_per_100g: Math.round((n['carbohydrates_100g'] ?? 0) * 10) / 10,
         fat_per_100g: Math.round((n['fat_100g'] ?? 0) * 10) / 10,
+        fiber_per_100g: n['fiber_100g'] != null ? Math.round(n['fiber_100g'] * 10) / 10 : null,
         source: 'off' as const,
       }
     })

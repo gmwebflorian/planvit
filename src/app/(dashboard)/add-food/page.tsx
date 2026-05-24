@@ -11,7 +11,7 @@ async function getFavorites(): Promise<FoodSearchResult[]> {
 
   const { data } = await supabase
     .from('favorites')
-    .select('food_name, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, brand, source, custom_label')
+    .select('food_name, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, brand, source, custom_label')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 
@@ -23,6 +23,7 @@ async function getFavorites(): Promise<FoodSearchResult[]> {
     protein_per_100g: f.protein_per_100g,
     carbs_per_100g: f.carbs_per_100g,
     fat_per_100g: f.fat_per_100g,
+    fiber_per_100g: f.fiber_per_100g ?? null,
     source: (f.source as 'ciqual' | 'off' | 'custom') ?? 'ciqual',
     customLabel: f.custom_label ?? undefined,
   }))

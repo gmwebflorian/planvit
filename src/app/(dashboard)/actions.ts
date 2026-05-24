@@ -49,6 +49,7 @@ export interface CreateCustomFoodInput {
   protein_per_100g: number
   carbs_per_100g: number
   fat_per_100g: number
+  fiber_per_100g?: number | null
 }
 
 export async function createCustomFood(input: CreateCustomFoodInput): Promise<string> {
@@ -72,6 +73,7 @@ export async function createCustomFood(input: CreateCustomFoodInput): Promise<st
       protein_per_100g: input.protein_per_100g,
       carbs_per_100g: input.carbs_per_100g,
       fat_per_100g: input.fat_per_100g,
+      fiber_per_100g: input.fiber_per_100g ?? null,
       creator_name: creatorName,
     })
     .select('id')
@@ -104,6 +106,7 @@ export interface FavoriteFood {
   protein_per_100g: number
   carbs_per_100g: number
   fat_per_100g: number
+  fiber_per_100g?: number | null
   brand?: string | null
   source?: string | null
   custom_label?: string | null
@@ -133,6 +136,7 @@ export async function toggleFavorite(food: FavoriteFood): Promise<boolean> {
       protein_per_100g: food.protein_per_100g,
       carbs_per_100g: food.carbs_per_100g,
       fat_per_100g: food.fat_per_100g,
+      fiber_per_100g: food.fiber_per_100g ?? null,
       brand: food.brand ?? null,
       source: food.source ?? null,
       custom_label: food.custom_label ?? null,

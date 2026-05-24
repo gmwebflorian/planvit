@@ -31,6 +31,7 @@ export default async function FoodDetailPage({ params }: { params: Promise<{ id:
     protein_per_100g:  Math.round((Number(entry.protein_g) / q) * 1000) / 10,
     carbs_per_100g:    Math.round((Number(entry.carbs_g)   / q) * 1000) / 10,
     fat_per_100g:      Math.round((Number(entry.fat_g)     / q) * 1000) / 10,
+    fiber_per_100g:    entry.fiber_g != null ? Math.round((Number(entry.fiber_g) / q) * 1000) / 10 : null,
     source: entry.custom_food_id ? 'custom' : null,
   }
 
@@ -82,6 +83,9 @@ export default async function FoodDetailPage({ params }: { params: Promise<{ id:
           <Macro label="Protéines" value={`${entry.protein_g}g`} color="#FF6B2B" />
           <Macro label="Glucides" value={`${entry.carbs_g}g`} color="#3B82F6" />
           <Macro label="Lipides" value={`${entry.fat_g}g`} color="#EAB308" />
+          {entry.fiber_g != null && (
+            <Macro label="Fibres" value={`${entry.fiber_g}g`} color="#10B981" />
+          )}
         </div>
 
         <p className="text-xs" style={{ color: '#A0A0A0' }}>

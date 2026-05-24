@@ -44,7 +44,7 @@ export async function getDayStravaCalories(
   return data.reduce((sum: number, a: Pick<StravaActivity, 'calories'>) => sum + (a.calories ?? 0), 0)
 }
 
-export type PeriodEntry = Pick<FoodEntry, 'date' | 'calories' | 'protein_g' | 'carbs_g' | 'fat_g'>
+export type PeriodEntry = Pick<FoodEntry, 'date' | 'calories' | 'protein_g' | 'carbs_g' | 'fat_g' | 'fiber_g'>
 
 export async function getPeriodEntries(
   supabase: SupabaseClient,
@@ -54,7 +54,7 @@ export async function getPeriodEntries(
 ): Promise<PeriodEntry[]> {
   const { data } = await supabase
     .from('food_entries')
-    .select('date, calories, protein_g, carbs_g, fat_g')
+    .select('date, calories, protein_g, carbs_g, fat_g, fiber_g')
     .eq('user_id', userId)
     .gte('date', fromDate)
     .lte('date', toDate)

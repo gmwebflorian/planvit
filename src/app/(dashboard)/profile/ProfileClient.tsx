@@ -79,6 +79,7 @@ export default function ProfileClient({ profile, email, bmr, tdee }: Props) {
   const [goalProt, setGoalProt] = useState(String(profile.goal_protein_g ?? ''))
   const [goalCarbs, setGoalCarbs] = useState(String(profile.goal_carbs_g ?? ''))
   const [goalFat, setGoalFat] = useState(String(profile.goal_fat_g ?? ''))
+  const [goalFiber, setGoalFiber] = useState(String(profile.goal_fiber_g ?? ''))
 
   // Personal data
   const [weight, setWeight] = useState(String(profile.weight_kg ?? ''))
@@ -93,6 +94,7 @@ export default function ProfileClient({ profile, email, bmr, tdee }: Props) {
         goal_protein_g: goalProt ? parseInt(goalProt) : null,
         goal_carbs_g: goalCarbs ? parseInt(goalCarbs) : null,
         goal_fat_g: goalFat ? parseInt(goalFat) : null,
+        goal_fiber_g: goalFiber ? parseInt(goalFiber) : null,
       })
     })
   }
@@ -171,6 +173,9 @@ export default function ProfileClient({ profile, email, bmr, tdee }: Props) {
               </Field>
               <Field label="Lipides">
                 <NumberInput value={goalFat} onChange={setGoalFat} placeholder="65" unit="g" />
+              </Field>
+              <Field label="Fibres">
+                <NumberInput value={goalFiber} onChange={setGoalFiber} placeholder="25" unit="g" />
               </Field>
             </div>
 
