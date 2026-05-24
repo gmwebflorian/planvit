@@ -91,11 +91,15 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
       const data = await res.json()
       const raw: FoodSearchResult[] = data.results ?? []
 
-      // Mark favorites and sort: favorites first, then the rest
-      const marked = raw.map((r) => ({
-        ...r,
-        isFavorite: favNameSet.current.has(normName(r.name)),
-      }))
+      // For favorited items, replace search data with the stored favorite data
+      // so both the empty state and search results show exactly the same card.
+      const marked = raw.map((r) => {
+        const favMatch = favorites.find((f) => normName(f.name) === normName(r.name))
+        if (favMatch) return { ...favMatch, isFavorite: true }
+        return { ...r, isFavorite: false }
+      })
+
+      // Favorites first, then the rest in their original relevance order
       marked.sort((a, b) => {
         if (a.isFavorite && !b.isFavorite) return -1
         if (!a.isFavorite && b.isFavorite) return 1
@@ -109,7 +113,7 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
     } finally {
       setLoading(false)
     }
-  }, []) // favNameSet is a ref, stable across renders
+  }, [favorites]) // favorites is stable (server prop)
 
   const handleQueryChange = (val: string) => {
     setQuery(val)
