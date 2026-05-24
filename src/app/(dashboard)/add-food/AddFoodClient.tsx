@@ -45,14 +45,21 @@ function SourceBadge({ source, customLabel }: { source: 'off' | 'ciqual' | 'cust
   )
 }
 
+function normName(s: string) {
+  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/['']/g, "'")
+}
+
 export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSearchResult[] }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const initialMeal = (searchParams.get('meal') as MealType) ?? 'breakfast'
 
+  // Normalized set of favorite names for O(1) lookup
+  const favNameSet = useRef(new Set(favorites.map((f) => normName(f.name))))
+
   const [step, setStep] = useState<'search' | 'quantity' | 'create'>('search')
   const [query, setQuery] = useState('')
-  // allResults = full sorted list from API; displayCount = how many we show
+  // allResults = full sorted list (favorites first, then rest); displayCount = how many we show
   const [allResults, setAllResults] = useState<FoodSearchResult[]>([])
   const [displayCount, setDisplayCount] = useState(PAGE_SIZE)
   const [loading, setLoading] = useState(false)
@@ -82,14 +89,27 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
     try {
       const res = await fetch(`/api/food/search?q=${encodeURIComponent(q)}`)
       const data = await res.json()
-      setAllResults(data.results ?? [])
+      const raw: FoodSearchResult[] = data.results ?? []
+
+      // Mark favorites and sort: favorites first, then the rest
+      const marked = raw.map((r) => ({
+        ...r,
+        isFavorite: favNameSet.current.has(normName(r.name)),
+      }))
+      marked.sort((a, b) => {
+        if (a.isFavorite && !b.isFavorite) return -1
+        if (!a.isFavorite && b.isFavorite) return 1
+        return 0
+      })
+
+      setAllResults(marked)
       setDisplayCount(PAGE_SIZE)
     } catch {
       setAllResults([])
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, []) // favNameSet is a ref, stable across renders
 
   const handleQueryChange = (val: string) => {
     setQuery(val)
