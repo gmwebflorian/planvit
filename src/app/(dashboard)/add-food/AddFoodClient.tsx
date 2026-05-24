@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Search, ArrowLeft, Plus, ChevronRight } from 'lucide-react'
+import { Search, ArrowLeft, Plus, ChevronRight, Star } from 'lucide-react'
 import type { FoodSearchResult } from '@/app/api/food/search/route'
 import type { MealType } from '@/types'
 import { addFoodEntry, createCustomFood } from '@/app/(dashboard)/actions'
@@ -45,7 +45,7 @@ function SourceBadge({ source, customLabel }: { source: 'off' | 'ciqual' | 'cust
   )
 }
 
-export default function AddFoodClient() {
+export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSearchResult[] }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const initialMeal = (searchParams.get('meal') as MealType) ?? 'breakfast'
@@ -387,7 +387,33 @@ export default function AddFoodClient() {
           </button>
         )}
 
-        {query.length === 0 && (
+        {query.length === 0 && favorites.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-1.5 px-1 pb-1">
+              <Star size={13} fill="#EAB308" color="#EAB308" />
+              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#A0A0A0' }}>Favoris</span>
+            </div>
+            {favorites.map((food) => (
+              <button key={food.id} onClick={() => handleSelect(food)}
+                className="w-full flex items-center justify-between rounded-2xl px-4 py-3 text-left active:opacity-70"
+                style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }}>
+                <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium truncate" style={{ color: '#FFFFFF' }}>{food.name}</span>
+                    <SourceBadge source={food.source} customLabel={food.customLabel} />
+                  </div>
+                  {food.brand && <span className="text-xs" style={{ color: '#A0A0A0' }}>{food.brand}</span>}
+                  <span className="text-xs tabular-nums" style={{ color: '#A0A0A0' }}>
+                    {food.calories_per_100g} kcal · {food.protein_per_100g}g P · {food.carbs_per_100g}g G · {food.fat_per_100g}g L
+                  </span>
+                </div>
+                <ChevronRight size={18} color="#A0A0A0" className="shrink-0 ml-2" />
+              </button>
+            ))}
+          </div>
+        )}
+
+        {query.length === 0 && favorites.length === 0 && (
           <div className="flex flex-col items-center py-16">
             <p className="text-sm" style={{ color: '#A0A0A0' }}>Tape le nom d&apos;un aliment pour commencer</p>
           </div>

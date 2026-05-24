@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { getFoodEntry } from '@/lib/supabase/queries'
 import { deleteFoodEntry } from '@/app/(dashboard)/actions'
+import { FavoriteButton } from '@/components/FavoriteButton'
+import type { FavoriteFood } from '@/app/(dashboard)/actions'
 
 const MEAL_LABELS: Record<string, string> = {
   breakfast: 'Petit-déjeuner',
@@ -20,6 +22,26 @@ export default async function FoodDetailPage({ params }: { params: Promise<{ id:
 
   const entry = await getFoodEntry(supabase, id)
   if (!entry || entry.user_id !== user.id) notFound()
+
+  // Per-100g macros (needed to re-add via favorites)
+  const q = Number(entry.quantity_g)
+  const favoriteFood: FavoriteFood = {
+    food_name: entry.food_name,
+    calories_per_100g: Math.round((Number(entry.calories) / q) * 1000) / 10,
+    protein_per_100g:  Math.round((Number(entry.protein_g) / q) * 1000) / 10,
+    carbs_per_100g:    Math.round((Number(entry.carbs_g)   / q) * 1000) / 10,
+    fat_per_100g:      Math.round((Number(entry.fat_g)     / q) * 1000) / 10,
+    source: entry.custom_food_id ? 'custom' : null,
+  }
+
+  const { data: favRow } = await supabase
+    .from('favorites')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('food_name', entry.food_name)
+    .maybeSingle()
+
+  const isFavorite = !!favRow
 
   const deleteAction = async () => {
     'use server'
@@ -44,16 +66,16 @@ export default async function FoodDetailPage({ params }: { params: Promise<{ id:
         style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }}
       >
         <div className="flex flex-col gap-1">
-          <h2 className="text-xl font-bold" style={{ color: '#FFFFFF' }}>{entry.food_name}</h2>
+          <div className="flex items-start justify-between gap-2">
+            <h2 className="text-xl font-bold" style={{ color: '#FFFFFF' }}>{entry.food_name}</h2>
+            <FavoriteButton isFavorite={isFavorite} food={favoriteFood} />
+          </div>
           <p className="text-sm" style={{ color: '#A0A0A0' }}>
             {MEAL_LABELS[entry.meal_type]} · {entry.quantity_g}g
           </p>
         </div>
 
-        <div
-          className="h-px w-full"
-          style={{ backgroundColor: '#2E2E2E' }}
-        />
+        <div className="h-px w-full" style={{ backgroundColor: '#2E2E2E' }} />
 
         <div className="grid grid-cols-2 gap-3">
           <Macro label="Calories" value={`${Math.round(entry.calories)} kcal`} color="#FF6B2B" />
@@ -86,10 +108,7 @@ export default async function FoodDetailPage({ params }: { params: Promise<{ id:
 
 function Macro({ label, value, color }: { label: string; value: string; color: string }) {
   return (
-    <div
-      className="rounded-xl p-3 flex flex-col gap-1"
-      style={{ backgroundColor: '#242424' }}
-    >
+    <div className="rounded-xl p-3 flex flex-col gap-1" style={{ backgroundColor: '#242424' }}>
       <span className="text-xs" style={{ color: '#A0A0A0' }}>{label}</span>
       <span className="text-lg font-bold tabular-nums" style={{ color }}>{value}</span>
     </div>
