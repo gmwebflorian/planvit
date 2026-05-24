@@ -12,6 +12,7 @@ export interface FoodSearchResult {
   fat_per_100g: number
   source: 'off' | 'ciqual' | 'custom'
   customLabel?: string
+  isFavorite?: boolean
 }
 
 // Normalize accents/ligatures for comparison
@@ -220,25 +221,34 @@ export async function GET(request: NextRequest) {
   const ciqual = ciqualResults.status === 'fulfilled' ? ciqualResults.value : []
   const off    = offResults.status    === 'fulfilled' ? offResults.value    : []
 
+  // Set of normalized favorite names — used to mark items from other sources
+  const favNames = new Set(favs.map((f) => norm(f.name)))
+
   // Priority: favorites → custom → ciqual/OFF (deduplicated by name)
   const seen = new Set<string>()
   const pinned: FoodSearchResult[] = []
 
   for (const item of favs) {
     seen.add(norm(item.name).slice(0, 40))
-    pinned.push(item)
+    pinned.push({ ...item, isFavorite: true })
   }
 
   const customUnique: FoodSearchResult[] = []
   for (const item of custom) {
     const key = norm(item.name).slice(0, 40)
-    if (!seen.has(key)) { seen.add(key); customUnique.push(item) }
+    if (!seen.has(key)) {
+      seen.add(key)
+      customUnique.push({ ...item, isFavorite: favNames.has(norm(item.name)) })
+    }
   }
 
   const rest: FoodSearchResult[] = []
   for (const item of [...ciqual, ...off]) {
     const key = norm(item.name).slice(0, 40)
-    if (!seen.has(key)) { seen.add(key); rest.push(item) }
+    if (!seen.has(key)) {
+      seen.add(key)
+      rest.push({ ...item, isFavorite: favNames.has(norm(item.name)) })
+    }
   }
 
   rest.sort((a, b) => relevanceScore(b.name, query) - relevanceScore(a.name, query))

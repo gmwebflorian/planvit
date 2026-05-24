@@ -348,6 +348,7 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
               <div className="flex items-center gap-2">
                 <span className="font-medium truncate" style={{ color: '#FFFFFF' }}>{food.name}</span>
                 <SourceBadge source={food.source} customLabel={food.customLabel} />
+                {food.isFavorite && <Star size={12} fill="#EAB308" color="#EAB308" className="shrink-0" />}
               </div>
               {food.brand && <span className="text-xs" style={{ color: '#A0A0A0' }}>{food.brand}</span>}
               <span className="text-xs tabular-nums" style={{ color: '#A0A0A0' }}>
