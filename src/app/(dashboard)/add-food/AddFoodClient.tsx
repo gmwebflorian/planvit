@@ -348,7 +348,15 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
         <button onClick={() => router.back()} className="p-1">
           <ArrowLeft size={22} color="#FFFFFF" />
         </button>
-        <span className="font-semibold text-lg" style={{ color: '#FFFFFF' }}>Ajouter un aliment</span>
+        <span className="font-semibold text-lg flex-1" style={{ color: '#FFFFFF' }}>Ajouter un aliment</span>
+        <button
+          onClick={handleOpenCreate}
+          className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+          style={{ backgroundColor: '#FF6B2B' }}
+          aria-label="Créer un aliment personnalisé"
+        >
+          <Plus size={18} color="#FFFFFF" />
+        </button>
       </div>
 
       <div className="px-4 pb-3">
