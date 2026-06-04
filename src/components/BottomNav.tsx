@@ -25,7 +25,7 @@ export default function BottomNav() {
 
         if (isFab) {
           return (
-            <Link key={href} href={href} className="flex flex-col items-center -mt-5">
+            <Link key={href} href={href} className="flex flex-col items-center -mt-9">
               <span
                 className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg"
                 style={{ backgroundColor: '#FF6B2B' }}
