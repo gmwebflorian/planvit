@@ -6,16 +6,50 @@ export default function LoginPage() {
       <div className="w-full max-w-sm flex flex-col items-center gap-10">
 
         {/* Logo & branding */}
-        <div className="flex flex-col items-center gap-3">
-          <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl font-bold"
-            style={{ backgroundColor: '#FF6B2B' }}
-          >
-            P
+        <div className="flex flex-col items-center gap-6">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            {/* Carré vert avec V */}
+            <div style={{
+              width: 72,
+              height: 72,
+              backgroundColor: '#0B6F48',
+              borderRadius: 16,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              boxShadow: '0 2px 0 rgba(0,0,0,0.12)',
+            }}>
+              <span style={{
+                fontFamily: 'var(--font-montserrat), sans-serif',
+                fontWeight: 900,
+                fontSize: 42,
+                lineHeight: '1',
+                color: '#E8E2D6',
+                letterSpacing: '-2.5px',
+              }}>V</span>
+            </div>
+            {/* plan VIT */}
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <span style={{
+                fontFamily: 'var(--font-montserrat), sans-serif',
+                fontWeight: 300,
+                fontSize: 13,
+                color: '#000000',
+                letterSpacing: '4.5px',
+                textTransform: 'uppercase',
+                lineHeight: '1.5',
+              }}>plan</span>
+              <span style={{
+                fontFamily: 'var(--font-montserrat), sans-serif',
+                fontWeight: 900,
+                fontSize: 32,
+                color: '#0B6F48',
+                letterSpacing: '-1.2px',
+                lineHeight: '1',
+              }}>VIT</span>
+            </div>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight" style={{ color: '#0F0F0F' }}>
-            PlanVIT
-          </h1>
           <p className="text-sm text-center" style={{ color: '#6B6457' }}>
             Suis tes macros, atteins tes objectifs.
           </p>
