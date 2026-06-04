@@ -25,12 +25,12 @@ export default function BottomNav() {
 
         if (isFab) {
           return (
-            <Link key={href} href={href} className="flex flex-col items-center -mt-9">
+            <Link key={href} href={href} className="flex flex-col items-center">
               <span
-                className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg"
+                className="w-12 h-12 rounded-full flex items-center justify-center shadow-md"
                 style={{ backgroundColor: '#FF6B2B' }}
               >
-                <Icon size={26} color="#FFFFFF" strokeWidth={2.5} />
+                <Icon size={22} color="#FFFFFF" strokeWidth={2.5} />
               </span>
             </Link>
           )
