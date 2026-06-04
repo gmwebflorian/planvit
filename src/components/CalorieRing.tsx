@@ -46,13 +46,13 @@ export default function CalorieRing({ consumed, goal, burned }: CalorieRingProps
 
         {/* Center text */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-4xl font-bold tabular-nums" style={{ color: '#FFFFFF' }}>
+          <span className="text-4xl font-bold tabular-nums" style={{ color: '#0F0F0F' }}>
             {consumed.toLocaleString('fr-FR')}
           </span>
-          <span className="text-sm" style={{ color: '#A0A0A0' }}>
+          <span className="text-sm" style={{ color: '#6B6457' }}>
             kcal consommées
           </span>
-          <span className="text-xs mt-1" style={{ color: '#A0A0A0' }}>
+          <span className="text-xs mt-1" style={{ color: '#6B6457' }}>
             objectif {budget.toLocaleString('fr-FR')}
           </span>
         </div>
@@ -66,7 +66,7 @@ export default function CalorieRing({ consumed, goal, burned }: CalorieRingProps
         >
           {isOver ? '+' : ''}{Math.abs(budget - consumed).toLocaleString('fr-FR')} kcal
         </span>
-        <span className="text-sm" style={{ color: '#A0A0A0' }}>
+        <span className="text-sm" style={{ color: '#6B6457' }}>
           {isOver ? "au-dessus de l'objectif" : 'restantes'}
         </span>
       </div>
@@ -74,7 +74,7 @@ export default function CalorieRing({ consumed, goal, burned }: CalorieRingProps
       {burned > 0 && (
         <div
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium"
-          style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E', color: '#22C55E' }}
+          style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC', color: '#22C55E' }}
         >
           <span>🔥</span>
           <span>+{burned} kcal brûlées (Strava)</span>

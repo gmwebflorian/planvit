@@ -18,7 +18,7 @@ export default function BottomNav() {
   return (
     <nav
       className="fixed bottom-0 left-0 right-0 z-50 flex items-end justify-around px-2 pb-safe"
-      style={{ backgroundColor: '#1A1A1A', borderTop: '1px solid #2E2E2E', height: '72px' }}
+      style={{ backgroundColor: '#FFFFFF', borderTop: '1px solid #DDD7CC', height: '72px' }}
     >
       {tabs.map(({ href, icon: Icon, label, isFab }) => {
         const isActive = pathname === href

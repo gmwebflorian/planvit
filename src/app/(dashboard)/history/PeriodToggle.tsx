@@ -17,7 +17,7 @@ export default function PeriodToggle({ current }: { current: Period }) {
   return (
     <div
       className="flex p-1 rounded-xl"
-      style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }}
+      style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}
     >
       {(['week', 'month'] as Period[]).map((p) => (
         <button

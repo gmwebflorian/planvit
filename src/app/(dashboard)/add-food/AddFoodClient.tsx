@@ -217,12 +217,12 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
   // ── Step: create custom food ──────────────────────────────────────────────
   if (step === 'create') {
     return (
-      <div className="flex flex-col min-h-screen" style={{ backgroundColor: '#0F0F0F' }}>
+      <div className="flex flex-col min-h-screen" style={{ backgroundColor: '#E8E2D6' }}>
         <div className="flex items-center gap-3 px-4 pt-5 pb-4">
           <button onClick={() => setStep('search')} className="p-1">
-            <ArrowLeft size={22} color="#FFFFFF" />
+            <ArrowLeft size={22} color="#0F0F0F" />
           </button>
-          <span className="font-semibold text-lg" style={{ color: '#FFFFFF' }}>Créer un aliment</span>
+          <span className="font-semibold text-lg" style={{ color: '#0F0F0F' }}>Créer un aliment</span>
         </div>
 
         <div className="flex flex-col gap-4 px-4">
@@ -235,7 +235,7 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
             { label: 'Fibres (g / 100g)', value: createFiber, set: setCreateFiber, type: 'number', placeholder: '0' },
           ].map(({ label, value, set, type, placeholder }) => (
             <div key={label} className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium uppercase tracking-wide" style={{ color: '#A0A0A0' }}>{label}</label>
+              <label className="text-xs font-medium uppercase tracking-wide" style={{ color: '#6B6457' }}>{label}</label>
               <input
                 type={type}
                 inputMode={type === 'number' ? 'decimal' : undefined}
@@ -243,7 +243,7 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
                 onChange={(e) => set(e.target.value)}
                 placeholder={placeholder}
                 className="rounded-xl px-4 py-3 text-base outline-none"
-                style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E', color: '#FFFFFF' }}
+                style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC', color: '#0F0F0F' }}
               />
             </div>
           ))}
@@ -264,25 +264,25 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
   // ── Step: quantity ────────────────────────────────────────────────────────
   if (step === 'quantity' && selected) {
     return (
-      <div className="flex flex-col min-h-screen" style={{ backgroundColor: '#0F0F0F' }}>
+      <div className="flex flex-col min-h-screen" style={{ backgroundColor: '#E8E2D6' }}>
         <div className="flex items-center gap-3 px-4 pt-5 pb-4">
           <button onClick={() => setStep('search')} className="p-1">
-            <ArrowLeft size={22} color="#FFFFFF" />
+            <ArrowLeft size={22} color="#0F0F0F" />
           </button>
-          <span className="font-semibold text-lg truncate" style={{ color: '#FFFFFF' }}>{selected.name}</span>
+          <span className="font-semibold text-lg truncate" style={{ color: '#0F0F0F' }}>{selected.name}</span>
         </div>
 
         <div className="flex flex-col gap-4 px-4">
-          <div className="rounded-2xl p-4" style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }}>
-            <p className="font-semibold" style={{ color: '#FFFFFF' }}>{selected.name}</p>
-            {selected.brand && <p className="text-sm mt-0.5" style={{ color: '#A0A0A0' }}>{selected.brand}</p>}
-            <p className="text-xs mt-2" style={{ color: '#A0A0A0' }}>
+          <div className="rounded-2xl p-4" style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}>
+            <p className="font-semibold" style={{ color: '#0F0F0F' }}>{selected.name}</p>
+            {selected.brand && <p className="text-sm mt-0.5" style={{ color: '#6B6457' }}>{selected.brand}</p>}
+            <p className="text-xs mt-2" style={{ color: '#6B6457' }}>
               Pour 100g : {selected.calories_per_100g} kcal · {selected.protein_per_100g}g P · {selected.carbs_per_100g}g G · {selected.fat_per_100g}g L{selected.fiber_per_100g != null ? ` · ${selected.fiber_per_100g}g F` : ''}
             </p>
           </div>
 
-          <div className="rounded-2xl p-4 flex flex-col gap-3" style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }}>
-            <label className="text-sm font-medium" style={{ color: '#A0A0A0' }}>Quantité (grammes)</label>
+          <div className="rounded-2xl p-4 flex flex-col gap-3" style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}>
+            <label className="text-sm font-medium" style={{ color: '#6B6457' }}>Quantité (grammes)</label>
             <input
               type="number"
               inputMode="decimal"
@@ -290,7 +290,7 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
               onChange={(e) => setQty(e.target.value)}
               autoFocus
               className="text-4xl font-bold text-center w-full bg-transparent outline-none tabular-nums"
-              style={{ color: '#FFFFFF' }}
+              style={{ color: '#0F0F0F' }}
               placeholder="100"
             />
             <div className="flex gap-2 justify-center">
@@ -305,21 +305,21 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
           </div>
 
           {macros && (
-            <div className="rounded-2xl p-4" style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }}>
+            <div className="rounded-2xl p-4" style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}>
               <div className="flex items-center justify-between">
                 <span className="text-2xl font-bold tabular-nums" style={{ color: '#FF6B2B' }}>{macros.calories} kcal</span>
                 <div className="flex gap-3 text-sm tabular-nums flex-wrap">
                   <span style={{ color: '#FF6B2B' }}>{macros.protein_g}g P</span>
                   <span style={{ color: '#3B82F6' }}>{macros.carbs_g}g G</span>
-                  <span style={{ color: '#EAB308' }}>{macros.fat_g}g L</span>
+                  <span style={{ color: '#D97706' }}>{macros.fat_g}g L</span>
                   {macros.fiber_g != null && <span style={{ color: '#10B981' }}>{macros.fiber_g}g F</span>}
                 </div>
               </div>
             </div>
           )}
 
-          <div className="rounded-2xl p-4 flex flex-col gap-3" style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }}>
-            <span className="text-sm font-medium" style={{ color: '#A0A0A0' }}>Repas</span>
+          <div className="rounded-2xl p-4 flex flex-col gap-3" style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}>
+            <span className="text-sm font-medium" style={{ color: '#6B6457' }}>Repas</span>
             <div className="grid grid-cols-2 gap-2">
               {MEAL_TYPES.map((m) => (
                 <button key={m} onClick={() => setMeal(m)}
@@ -343,12 +343,12 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
 
   // ── Step: search ──────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col min-h-screen" style={{ backgroundColor: '#0F0F0F' }}>
+    <div className="flex flex-col min-h-screen" style={{ backgroundColor: '#E8E2D6' }}>
       <div className="flex items-center gap-3 px-4 pt-5 pb-3">
         <button onClick={() => router.back()} className="p-1">
-          <ArrowLeft size={22} color="#FFFFFF" />
+          <ArrowLeft size={22} color="#0F0F0F" />
         </button>
-        <span className="font-semibold text-lg flex-1" style={{ color: '#FFFFFF' }}>Ajouter un aliment</span>
+        <span className="font-semibold text-lg flex-1" style={{ color: '#0F0F0F' }}>Ajouter un aliment</span>
         <button
           onClick={handleOpenCreate}
           className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
@@ -361,8 +361,8 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
 
       <div className="px-4 pb-3">
         <div className="flex items-center gap-3 rounded-2xl px-4 py-3"
-          style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }}>
-          <Search size={18} color="#A0A0A0" />
+          style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}>
+          <Search size={18} color="#6B6457" />
           <input
             ref={inputRef}
             type="search"
@@ -370,7 +370,7 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
             onChange={(e) => handleQueryChange(e.target.value)}
             placeholder="Rechercher un aliment…"
             className="flex-1 bg-transparent outline-none text-base"
-            style={{ color: '#FFFFFF' }}
+            style={{ color: '#0F0F0F' }}
           />
           {loading && (
             <div className="w-4 h-4 rounded-full border-2 animate-spin"
@@ -383,19 +383,19 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
         {visibleResults.map((food) => (
           <button key={food.id} onClick={() => handleSelect(food)}
             className="w-full flex items-center justify-between rounded-2xl px-4 py-3 text-left active:opacity-70"
-            style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }}>
+            style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}>
             <div className="flex flex-col gap-0.5 min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="font-medium truncate" style={{ color: '#FFFFFF' }}>{food.name}</span>
+                <span className="font-medium truncate" style={{ color: '#0F0F0F' }}>{food.name}</span>
                 <SourceBadge source={food.source} customLabel={food.customLabel} />
                 {food.isFavorite && <Star size={12} fill="#EAB308" color="#EAB308" className="shrink-0" />}
               </div>
-              {food.brand && <span className="text-xs" style={{ color: '#A0A0A0' }}>{food.brand}</span>}
-              <span className="text-xs tabular-nums" style={{ color: '#A0A0A0' }}>
+              {food.brand && <span className="text-xs" style={{ color: '#6B6457' }}>{food.brand}</span>}
+              <span className="text-xs tabular-nums" style={{ color: '#6B6457' }}>
                 {food.calories_per_100g} kcal · {food.protein_per_100g}g P · {food.carbs_per_100g}g G · {food.fat_per_100g}g L{food.fiber_per_100g != null ? ` · ${food.fiber_per_100g}g F` : ''}
               </span>
             </div>
-            <ChevronRight size={18} color="#A0A0A0" className="shrink-0 ml-2" />
+            <ChevronRight size={18} color="#6B6457" className="shrink-0 ml-2" />
           </button>
         ))}
 
@@ -403,16 +403,16 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
         {hasMore && (
           <div ref={sentinelRef} className="flex items-center justify-center py-4">
             <div className="w-5 h-5 rounded-full border-2 animate-spin"
-              style={{ borderColor: '#2E2E2E', borderTopColor: '#A0A0A0' }} />
+              style={{ borderColor: '#DDD7CC', borderTopColor: '#A0A0A0' }} />
           </div>
         )}
 
         {query.length >= 2 && !loading && allResults.length === 0 && (
           <div className="flex flex-col items-center gap-4 py-10">
-            <p style={{ color: '#A0A0A0' }}>Aucun résultat pour « {query} »</p>
+            <p style={{ color: '#6B6457' }}>Aucun résultat pour « {query} »</p>
             <button onClick={handleOpenCreate}
               className="flex items-center gap-2 px-5 py-3 rounded-2xl font-medium"
-              style={{ backgroundColor: '#1A1A1A', border: '1px solid #FF6B2B', color: '#FF6B2B' }}>
+              style={{ backgroundColor: '#FFFFFF', border: '1px solid #FF6B2B', color: '#FF6B2B' }}>
               <Plus size={18} />
               Créer cet aliment
             </button>
@@ -422,7 +422,7 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
         {query.length >= 2 && !loading && allResults.length > 0 && !hasMore && (
           <button onClick={handleOpenCreate}
             className="flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-medium mt-1"
-            style={{ backgroundColor: 'transparent', border: '1px dashed #2E2E2E', color: '#A0A0A0' }}>
+            style={{ backgroundColor: 'transparent', border: '1px dashed #2E2E2E', color: '#6B6457' }}>
             <Plus size={15} />
             Créer un aliment personnalisé
           </button>
@@ -432,23 +432,23 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-1.5 px-1 pb-1">
               <Star size={13} fill="#EAB308" color="#EAB308" />
-              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#A0A0A0' }}>Favoris</span>
+              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#6B6457' }}>Favoris</span>
             </div>
             {favorites.map((food) => (
               <button key={food.id} onClick={() => handleSelect(food)}
                 className="w-full flex items-center justify-between rounded-2xl px-4 py-3 text-left active:opacity-70"
-                style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }}>
+                style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}>
                 <div className="flex flex-col gap-0.5 min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium truncate" style={{ color: '#FFFFFF' }}>{food.name}</span>
+                    <span className="font-medium truncate" style={{ color: '#0F0F0F' }}>{food.name}</span>
                     <SourceBadge source={food.source} customLabel={food.customLabel} />
                   </div>
-                  {food.brand && <span className="text-xs" style={{ color: '#A0A0A0' }}>{food.brand}</span>}
-                  <span className="text-xs tabular-nums" style={{ color: '#A0A0A0' }}>
+                  {food.brand && <span className="text-xs" style={{ color: '#6B6457' }}>{food.brand}</span>}
+                  <span className="text-xs tabular-nums" style={{ color: '#6B6457' }}>
                     {food.calories_per_100g} kcal · {food.protein_per_100g}g P · {food.carbs_per_100g}g G · {food.fat_per_100g}g L{food.fiber_per_100g != null ? ` · ${food.fiber_per_100g}g F` : ''}
                   </span>
                 </div>
-                <ChevronRight size={18} color="#A0A0A0" className="shrink-0 ml-2" />
+                <ChevronRight size={18} color="#6B6457" className="shrink-0 ml-2" />
               </button>
             ))}
           </div>
@@ -456,7 +456,7 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
 
         {query.length === 0 && favorites.length === 0 && (
           <div className="flex flex-col items-center py-16">
-            <p className="text-sm" style={{ color: '#A0A0A0' }}>Tape le nom d&apos;un aliment pour commencer</p>
+            <p className="text-sm" style={{ color: '#6B6457' }}>Tape le nom d&apos;un aliment pour commencer</p>
           </div>
         )}
       </div>

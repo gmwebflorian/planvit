@@ -24,7 +24,7 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-medium uppercase tracking-wide" style={{ color: '#A0A0A0' }}>
+      <label className="text-xs font-medium uppercase tracking-wide" style={{ color: '#6B6457' }}>
         {label}
       </label>
       {children}
@@ -50,7 +50,7 @@ function NumberInput({
   return (
     <div
       className="flex items-center rounded-xl px-4"
-      style={{ backgroundColor: '#242424', border: '1px solid #2E2E2E' }}
+      style={{ backgroundColor: '#F0EBE3', border: '1px solid #DDD7CC' }}
     >
       <input
         type="number"
@@ -61,10 +61,10 @@ function NumberInput({
         min={min}
         max={max}
         className="flex-1 bg-transparent py-3 outline-none text-base tabular-nums"
-        style={{ color: '#FFFFFF' }}
+        style={{ color: '#0F0F0F' }}
       />
       {unit && (
-        <span className="text-sm ml-2 shrink-0" style={{ color: '#A0A0A0' }}>{unit}</span>
+        <span className="text-sm ml-2 shrink-0" style={{ color: '#6B6457' }}>{unit}</span>
       )}
     </div>
   )
@@ -118,7 +118,7 @@ export default function ProfileClient({ profile, email, bmr, tdee }: Props) {
       {/* Avatar + identity */}
       <div
         className="rounded-3xl p-5 flex items-center gap-4"
-        style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }}
+        style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}
       >
         {profile.avatar_url ? (
           <img
@@ -135,32 +135,32 @@ export default function ProfileClient({ profile, email, bmr, tdee }: Props) {
           </div>
         )}
         <div className="flex flex-col gap-0.5 min-w-0">
-          <span className="font-bold text-lg truncate" style={{ color: '#FFFFFF' }}>
+          <span className="font-bold text-lg truncate" style={{ color: '#0F0F0F' }}>
             {profile.full_name ?? '—'}
           </span>
-          <span className="text-sm truncate" style={{ color: '#A0A0A0' }}>{email}</span>
+          <span className="text-sm truncate" style={{ color: '#6B6457' }}>{email}</span>
         </div>
       </div>
 
       {/* Goals section */}
       <div
         className="rounded-2xl overflow-hidden"
-        style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }}
+        style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}
       >
         <button
           onClick={() => setOpenSection(openSection === 'goals' ? null : 'goals')}
           className="w-full flex items-center justify-between px-5 py-4"
         >
-          <span className="font-semibold" style={{ color: '#FFFFFF' }}>Mes objectifs</span>
+          <span className="font-semibold" style={{ color: '#0F0F0F' }}>Mes objectifs</span>
           <ChevronDown
             size={18}
-            color="#A0A0A0"
+            color="#6B6457"
             style={{ transform: openSection === 'goals' ? 'rotate(180deg)' : 'none', transition: '0.2s' }}
           />
         </button>
 
         {openSection === 'goals' && (
-          <div className="px-5 pb-5 flex flex-col gap-4" style={{ borderTop: '1px solid #2E2E2E' }}>
+          <div className="px-5 pb-5 flex flex-col gap-4" style={{ borderTop: '1px solid #DDD7CC' }}>
             <div className="pt-4 flex flex-col gap-4">
               <Field label="Calories (kcal/jour)">
                 <NumberInput value={goalCal} onChange={setGoalCal} placeholder="2000" min={800} max={6000} unit="kcal" />
@@ -195,22 +195,22 @@ export default function ProfileClient({ profile, email, bmr, tdee }: Props) {
       {/* Personal data section */}
       <div
         className="rounded-2xl overflow-hidden"
-        style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }}
+        style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}
       >
         <button
           onClick={() => setOpenSection(openSection === 'data' ? null : 'data')}
           className="w-full flex items-center justify-between px-5 py-4"
         >
-          <span className="font-semibold" style={{ color: '#FFFFFF' }}>Mes données</span>
+          <span className="font-semibold" style={{ color: '#0F0F0F' }}>Mes données</span>
           <ChevronDown
             size={18}
-            color="#A0A0A0"
+            color="#6B6457"
             style={{ transform: openSection === 'data' ? 'rotate(180deg)' : 'none', transition: '0.2s' }}
           />
         </button>
 
         {openSection === 'data' && (
-          <div className="px-5 pb-5 flex flex-col gap-4" style={{ borderTop: '1px solid #2E2E2E' }}>
+          <div className="px-5 pb-5 flex flex-col gap-4" style={{ borderTop: '1px solid #DDD7CC' }}>
             <div className="pt-4 flex flex-col gap-4">
               <Field label="Poids">
                 <NumberInput value={weight} onChange={setWeight} placeholder="75" unit="kg" min={30} max={300} />
@@ -224,7 +224,7 @@ export default function ProfileClient({ profile, email, bmr, tdee }: Props) {
                   value={birthDate}
                   onChange={(e) => setBirthDate(e.target.value)}
                   className="rounded-xl px-4 py-3 outline-none text-base"
-                  style={{ backgroundColor: '#242424', border: '1px solid #2E2E2E', color: '#FFFFFF' }}
+                  style={{ backgroundColor: '#F0EBE3', border: '1px solid #DDD7CC', color: '#0F0F0F' }}
                 />
               </Field>
               <Field label="Sexe">
@@ -238,7 +238,7 @@ export default function ProfileClient({ profile, email, bmr, tdee }: Props) {
                       style={{
                         backgroundColor: sex === s ? '#FF6B2B' : '#242424',
                         color: sex === s ? '#FFFFFF' : '#A0A0A0',
-                        border: '1px solid #2E2E2E',
+                        border: '1px solid #DDD7CC',
                       }}
                     >
                       {s === 'male' ? 'Homme' : 'Femme'}
@@ -252,20 +252,20 @@ export default function ProfileClient({ profile, email, bmr, tdee }: Props) {
             {(bmr || tdee) && (
               <div
                 className="rounded-xl p-4 flex flex-col gap-2"
-                style={{ backgroundColor: '#242424' }}
+                style={{ backgroundColor: '#F0EBE3' }}
               >
-                <p className="text-xs font-medium uppercase tracking-wide" style={{ color: '#A0A0A0' }}>
+                <p className="text-xs font-medium uppercase tracking-wide" style={{ color: '#6B6457' }}>
                   Métabolisme calculé
                 </p>
                 <div className="flex justify-between">
-                  <span className="text-sm" style={{ color: '#A0A0A0' }}>BMR</span>
-                  <span className="text-sm font-semibold tabular-nums" style={{ color: '#FFFFFF' }}>
+                  <span className="text-sm" style={{ color: '#6B6457' }}>BMR</span>
+                  <span className="text-sm font-semibold tabular-nums" style={{ color: '#0F0F0F' }}>
                     {bmr ? `${Math.round(bmr)} kcal` : '—'}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm" style={{ color: '#A0A0A0' }}>TDEE (×1.375)</span>
-                  <span className="text-sm font-semibold tabular-nums" style={{ color: '#FFFFFF' }}>
+                  <span className="text-sm" style={{ color: '#6B6457' }}>TDEE (×1.375)</span>
+                  <span className="text-sm font-semibold tabular-nums" style={{ color: '#0F0F0F' }}>
                     {tdee ? `${Math.round(tdee)} kcal` : '—'}
                   </span>
                 </div>
@@ -290,7 +290,7 @@ export default function ProfileClient({ profile, email, bmr, tdee }: Props) {
         <button
           type="submit"
           className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-semibold"
-          style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E', color: '#A0A0A0' }}
+          style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC', color: '#6B6457' }}
         >
           <LogOut size={18} />
           Se déconnecter

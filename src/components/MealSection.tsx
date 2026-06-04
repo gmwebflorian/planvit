@@ -20,16 +20,16 @@ export default function MealSection({ type, entries }: MealSectionProps) {
   return (
     <div
       className="rounded-2xl overflow-hidden"
-      style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }}
+      style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-2">
-          <span className="font-semibold" style={{ color: '#FFFFFF' }}>
+          <span className="font-semibold" style={{ color: '#0F0F0F' }}>
             {MEAL_LABELS[type]}
           </span>
           {totalCal > 0 && (
-            <span className="text-sm tabular-nums" style={{ color: '#A0A0A0' }}>
+            <span className="text-sm tabular-nums" style={{ color: '#6B6457' }}>
               {totalCal} kcal
             </span>
           )}
@@ -37,7 +37,7 @@ export default function MealSection({ type, entries }: MealSectionProps) {
         <Link
           href={`/add-food?meal=${type}`}
           className="w-7 h-7 rounded-full flex items-center justify-center"
-          style={{ backgroundColor: '#242424' }}
+          style={{ backgroundColor: '#F0EBE3' }}
         >
           <Plus size={15} color="#FF6B2B" strokeWidth={2.5} />
         </Link>
@@ -45,23 +45,23 @@ export default function MealSection({ type, entries }: MealSectionProps) {
 
       {/* Entries */}
       {entries.length > 0 && (
-        <div style={{ borderTop: '1px solid #2E2E2E' }}>
+        <div style={{ borderTop: '1px solid #DDD7CC' }}>
           {entries.map((entry) => (
             <Link
               key={entry.id}
               href={`/food/${entry.id}`}
               className="flex items-center justify-between px-4 py-3 active:opacity-70"
-              style={{ borderBottom: '1px solid #2E2E2E' }}
+              style={{ borderBottom: '1px solid #DDD7CC' }}
             >
               <div className="flex flex-col gap-0.5 min-w-0">
-                <span className="text-sm font-medium truncate" style={{ color: '#FFFFFF' }}>
+                <span className="text-sm font-medium truncate" style={{ color: '#0F0F0F' }}>
                   {entry.food_name}
                 </span>
-                <span className="text-xs tabular-nums" style={{ color: '#A0A0A0' }}>
+                <span className="text-xs tabular-nums" style={{ color: '#6B6457' }}>
                   {entry.quantity_g}g · {entry.protein_g}P · {entry.carbs_g}G · {entry.fat_g}L
                 </span>
               </div>
-              <span className="text-sm font-semibold tabular-nums ml-3 shrink-0" style={{ color: '#FFFFFF' }}>
+              <span className="text-sm font-semibold tabular-nums ml-3 shrink-0" style={{ color: '#0F0F0F' }}>
                 {entry.calories} kcal
               </span>
             </Link>
@@ -71,7 +71,7 @@ export default function MealSection({ type, entries }: MealSectionProps) {
 
       {entries.length === 0 && (
         <div className="px-4 pb-3">
-          <span className="text-sm" style={{ color: '#A0A0A0' }}>Aucun aliment ajouté</span>
+          <span className="text-sm" style={{ color: '#6B6457' }}>Aucun aliment ajouté</span>
         </div>
       )}
     </div>

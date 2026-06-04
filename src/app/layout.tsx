@@ -33,11 +33,11 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      className={`${inter.variable} ${montserrat.variable} dark h-full antialiased`}
+      className={`${inter.variable} ${montserrat.variable} h-full antialiased`}
     >
       <body
         className="min-h-full flex flex-col"
-        style={{ backgroundColor: "#0F0F0F", color: "#FFFFFF" }}
+        style={{ backgroundColor: "#E8E2D6", color: "#0F0F0F" }}
       >
         <SplashScreen />
         {children}

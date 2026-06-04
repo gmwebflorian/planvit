@@ -92,7 +92,7 @@ export default async function HistoryPage({
 
   return (
     <div className="flex flex-col gap-4 px-4 pt-5 pb-6">
-      <h1 className="text-xl font-bold" style={{ color: '#FFFFFF' }}>Historique</h1>
+      <h1 className="text-xl font-bold" style={{ color: '#0F0F0F' }}>Historique</h1>
 
       {/* Period toggle */}
       <Suspense>
@@ -125,17 +125,17 @@ export default async function HistoryPage({
       {daysWithData.length > 0 ? (
         <div
           className="rounded-2xl p-4"
-          style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }}
+          style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}
         >
           <CalorieChart days={dayStats} />
         </div>
       ) : (
         <div
           className="rounded-2xl p-8 flex flex-col items-center gap-2"
-          style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }}
+          style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}
         >
-          <p className="font-medium" style={{ color: '#FFFFFF' }}>Pas encore de données</p>
-          <p className="text-sm text-center" style={{ color: '#A0A0A0' }}>
+          <p className="font-medium" style={{ color: '#0F0F0F' }}>Pas encore de données</p>
+          <p className="text-sm text-center" style={{ color: '#6B6457' }}>
             Ajoute des repas pour voir ton historique ici.
           </p>
         </div>
@@ -145,11 +145,11 @@ export default async function HistoryPage({
       {daysWithData.length > 0 && (
         <div
           className="rounded-2xl overflow-hidden"
-          style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }}
+          style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}
         >
           <div
             className="grid grid-cols-4 px-4 py-2 text-xs font-medium uppercase tracking-wide"
-            style={{ color: '#A0A0A0', borderBottom: '1px solid #2E2E2E' }}
+            style={{ color: '#6B6457', borderBottom: '1px solid #DDD7CC' }}
           >
             <span>Jour</span>
             <span className="text-right">Kcal</span>
@@ -160,19 +160,19 @@ export default async function HistoryPage({
             <div
               key={d.date}
               className="grid grid-cols-4 px-4 py-3 items-center"
-              style={{ borderBottom: '1px solid #2E2E2E', opacity: d.hasData ? 1 : 0.4 }}
+              style={{ borderBottom: '1px solid #DDD7CC', opacity: d.hasData ? 1 : 0.4 }}
             >
-              <span className="text-sm" style={{ color: '#FFFFFF' }}>
+              <span className="text-sm" style={{ color: '#0F0F0F' }}>
                 {new Date(d.date + 'T00:00:00').toLocaleDateString('fr-FR', {
                   weekday: 'short',
                   day: 'numeric',
                   month: 'short',
                 })}
               </span>
-              <span className="text-sm tabular-nums text-right" style={{ color: '#FFFFFF' }}>
+              <span className="text-sm tabular-nums text-right" style={{ color: '#0F0F0F' }}>
                 {d.hasData ? d.calories.toLocaleString('fr-FR') : '—'}
               </span>
-              <span className="text-sm tabular-nums text-right" style={{ color: '#A0A0A0' }}>
+              <span className="text-sm tabular-nums text-right" style={{ color: '#6B6457' }}>
                 {d.hasData ? `${d.protein}g` : '—'}
               </span>
               <div className="flex justify-end">
@@ -187,7 +187,7 @@ export default async function HistoryPage({
                     {d.inGoal ? '✓' : `+${d.calories - d.goal}`}
                   </span>
                 ) : (
-                  <span className="text-xs" style={{ color: '#A0A0A0' }}>—</span>
+                  <span className="text-xs" style={{ color: '#6B6457' }}>—</span>
                 )}
               </div>
             </div>
@@ -212,11 +212,11 @@ function StatCard({
   return (
     <div
       className="rounded-2xl p-4 flex flex-col gap-1"
-      style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }}
+      style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}
     >
-      <span className="text-xs" style={{ color: '#A0A0A0' }}>{label}</span>
+      <span className="text-xs" style={{ color: '#6B6457' }}>{label}</span>
       <span className="text-xl font-bold tabular-nums" style={{ color }}>{value}</span>
-      <span className="text-xs" style={{ color: '#A0A0A0' }}>{sub}</span>
+      <span className="text-xs" style={{ color: '#6B6457' }}>{sub}</span>
     </div>
   )
 }

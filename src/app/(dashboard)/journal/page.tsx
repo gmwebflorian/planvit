@@ -45,11 +45,11 @@ export default async function JournalPage({
 
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 pt-1">
-        <h1 className="text-xl font-bold" style={{ color: '#FFFFFF' }}>Journal</h1>
+        <h1 className="text-xl font-bold" style={{ color: '#0F0F0F' }}>Journal</h1>
         <Link
           href="/history"
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium"
-          style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E', color: '#A0A0A0' }}
+          style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC', color: '#6B6457' }}
         >
           <BarChart2 size={14} />
           Historique
@@ -63,16 +63,16 @@ export default async function JournalPage({
       <div className="px-4">
         <div
           className="rounded-3xl p-5 flex flex-col gap-4"
-          style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }}
+          style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}
         >
           {/* Calorie summary */}
           <div className="flex items-end justify-between">
             <div>
-              <p className="text-3xl font-bold tabular-nums" style={{ color: '#FFFFFF' }}>
+              <p className="text-3xl font-bold tabular-nums" style={{ color: '#0F0F0F' }}>
                 {totalCal.toLocaleString('fr-FR')}
-                <span className="text-base font-normal ml-1" style={{ color: '#A0A0A0' }}>kcal</span>
+                <span className="text-base font-normal ml-1" style={{ color: '#6B6457' }}>kcal</span>
               </p>
-              <p className="text-sm mt-0.5" style={{ color: '#A0A0A0' }}>
+              <p className="text-sm mt-0.5" style={{ color: '#6B6457' }}>
                 sur {budget.toLocaleString('fr-FR')} kcal
                 {stravaCalories > 0 && (
                   <span style={{ color: '#22C55E' }}> (+{Math.round(stravaCalories)} Strava)</span>
@@ -91,7 +91,7 @@ export default async function JournalPage({
           </div>
 
           {/* Progress bar */}
-          <div className="h-2 rounded-full" style={{ backgroundColor: '#242424' }}>
+          <div className="h-2 rounded-full" style={{ backgroundColor: '#F0EBE3' }}>
             <div
               className="h-2 rounded-full transition-all"
               style={{
@@ -122,8 +122,8 @@ export default async function JournalPage({
 
         {entries.length === 0 && (
           <div className="flex flex-col items-center py-10 gap-2">
-            <p className="text-base font-medium" style={{ color: '#FFFFFF' }}>Aucun repas ce jour</p>
-            <p className="text-sm" style={{ color: '#A0A0A0' }}>Utilise le bouton + pour ajouter un aliment.</p>
+            <p className="text-base font-medium" style={{ color: '#0F0F0F' }}>Aucun repas ce jour</p>
+            <p className="text-sm" style={{ color: '#6B6457' }}>Utilise le bouton + pour ajouter un aliment.</p>
           </div>
         )}
       </div>
@@ -146,11 +146,11 @@ function MacroChip({
   return (
     <div
       className="rounded-xl p-3 flex flex-col gap-1"
-      style={{ backgroundColor: '#242424' }}
+      style={{ backgroundColor: '#F0EBE3' }}
     >
-      <span className="text-[10px] uppercase tracking-wide font-medium" style={{ color: '#A0A0A0' }}>{label}</span>
+      <span className="text-[10px] uppercase tracking-wide font-medium" style={{ color: '#6B6457' }}>{label}</span>
       <span className="text-base font-bold tabular-nums" style={{ color }}>{value}g</span>
-      <span className="text-[10px] tabular-nums" style={{ color: '#A0A0A0' }}>{pct}% / {goal}g</span>
+      <span className="text-[10px] tabular-nums" style={{ color: '#6B6457' }}>{pct}% / {goal}g</span>
     </div>
   )
 }

@@ -1,5 +1,5 @@
 function Skel({ w, h, rounded = 'rounded' }: { w: string; h: string; rounded?: string }) {
-  return <div className={`${w} ${h} ${rounded} animate-pulse`} style={{ backgroundColor: '#2E2E2E' }} />
+  return <div className={`${w} ${h} ${rounded} animate-pulse`} style={{ backgroundColor: '#DDD7CC' }} />
 }
 
 export default function Loading() {
@@ -19,7 +19,7 @@ export default function Loading() {
       </div>
 
       {/* Calories summary */}
-      <div className="rounded-2xl px-5 py-4 flex justify-between" style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }}>
+      <div className="rounded-2xl px-5 py-4 flex justify-between" style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}>
         {[1, 2, 3, 4].map((i) => (
           <div key={i} className="flex flex-col items-center gap-2">
             <Skel w="w-12" h="h-5" />
@@ -30,7 +30,7 @@ export default function Loading() {
 
       {/* Meal sections */}
       {[1, 2, 3, 4].map((i) => (
-        <div key={i} className="rounded-2xl px-4 py-4 flex flex-col gap-3" style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }}>
+        <div key={i} className="rounded-2xl px-4 py-4 flex flex-col gap-3" style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}>
           <Skel w="w-32" h="h-4" />
           <Skel w="w-48" h="h-3" />
         </div>

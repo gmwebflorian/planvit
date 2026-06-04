@@ -37,16 +37,16 @@ export default function DateNav({ date }: Props) {
       <button
         onClick={() => go(-1)}
         className="w-9 h-9 rounded-full flex items-center justify-center active:opacity-60"
-        style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }}
+        style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}
       >
-        <ChevronLeft size={18} color="#FFFFFF" />
+        <ChevronLeft size={18} color="#0F0F0F" />
       </button>
 
       <button
         onClick={() => router.push(`/journal?date=${today}`)}
         className="flex flex-col items-center"
       >
-        <span className="font-semibold capitalize" style={{ color: '#FFFFFF' }}>
+        <span className="font-semibold capitalize" style={{ color: '#0F0F0F' }}>
           {formatDisplay(date)}
         </span>
         {!isToday && (
@@ -60,9 +60,9 @@ export default function DateNav({ date }: Props) {
         onClick={() => go(1)}
         disabled={isToday}
         className="w-9 h-9 rounded-full flex items-center justify-center disabled:opacity-30 active:opacity-60"
-        style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }}
+        style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}
       >
-        <ChevronRight size={18} color="#FFFFFF" />
+        <ChevronRight size={18} color="#0F0F0F" />
       </button>
     </div>
   )

@@ -1,10 +1,10 @@
 function Skel({ w, h, rounded = 'rounded' }: { w: string; h: string; rounded?: string }) {
-  return <div className={`${w} ${h} ${rounded} animate-pulse`} style={{ backgroundColor: '#2E2E2E' }} />
+  return <div className={`${w} ${h} ${rounded} animate-pulse`} style={{ backgroundColor: '#DDD7CC' }} />
 }
 
 export default function Loading() {
   return (
-    <div className="flex flex-col min-h-screen px-4 pt-5 gap-5" style={{ backgroundColor: '#0F0F0F' }}>
+    <div className="flex flex-col min-h-screen px-4 pt-5 gap-5" style={{ backgroundColor: '#E8E2D6' }}>
       {/* Header */}
       <div className="flex items-center gap-3">
         <Skel w="w-6" h="h-6" rounded="rounded-lg" />
@@ -12,7 +12,7 @@ export default function Loading() {
       </div>
 
       {/* Food card */}
-      <div className="rounded-2xl p-5 flex flex-col gap-4" style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }}>
+      <div className="rounded-2xl p-5 flex flex-col gap-4" style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}>
         <div className="flex items-start justify-between">
           <div className="flex flex-col gap-2">
             <Skel w="w-40" h="h-6" />
@@ -21,11 +21,11 @@ export default function Loading() {
           <Skel w="w-7" h="h-7" rounded="rounded-full" />
         </div>
 
-        <div className="h-px w-full" style={{ backgroundColor: '#2E2E2E' }} />
+        <div className="h-px w-full" style={{ backgroundColor: '#DDD7CC' }} />
 
         <div className="grid grid-cols-2 gap-3">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="rounded-xl p-3 flex flex-col gap-2" style={{ backgroundColor: '#242424' }}>
+            <div key={i} className="rounded-xl p-3 flex flex-col gap-2" style={{ backgroundColor: '#F0EBE3' }}>
               <Skel w="w-14" h="h-3" />
               <Skel w="w-20" h="h-6" />
             </div>
@@ -36,7 +36,7 @@ export default function Loading() {
       </div>
 
       {/* Delete button */}
-      <div className="h-14 rounded-2xl animate-pulse" style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }} />
+      <div className="h-14 rounded-2xl animate-pulse" style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }} />
     </div>
   )
 }

@@ -2,7 +2,7 @@ import { signInWithGoogle } from '@/app/(auth)/actions'
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6" style={{ backgroundColor: '#0F0F0F' }}>
+    <div className="min-h-screen flex flex-col items-center justify-center px-6" style={{ backgroundColor: '#E8E2D6' }}>
       <div className="w-full max-w-sm flex flex-col items-center gap-10">
 
         {/* Logo & branding */}
@@ -13,10 +13,10 @@ export default function LoginPage() {
           >
             P
           </div>
-          <h1 className="text-3xl font-bold tracking-tight" style={{ color: '#FFFFFF' }}>
+          <h1 className="text-3xl font-bold tracking-tight" style={{ color: '#0F0F0F' }}>
             PlanVIT
           </h1>
-          <p className="text-sm text-center" style={{ color: '#A0A0A0' }}>
+          <p className="text-sm text-center" style={{ color: '#6B6457' }}>
             Suis tes macros, atteins tes objectifs.
           </p>
         </div>
@@ -26,14 +26,14 @@ export default function LoginPage() {
           <button
             type="submit"
             className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl font-semibold text-base transition-opacity active:opacity-70"
-            style={{ backgroundColor: '#1A1A1A', color: '#FFFFFF', border: '1px solid #2E2E2E' }}
+            style={{ backgroundColor: '#FFFFFF', color: '#0F0F0F', border: '1px solid #DDD7CC' }}
           >
             <GoogleIcon />
             Continuer avec Google
           </button>
         </form>
 
-        <p className="text-xs text-center" style={{ color: '#A0A0A0' }}>
+        <p className="text-xs text-center" style={{ color: '#6B6457' }}>
           En continuant, tu acceptes nos conditions d&apos;utilisation.
         </p>
       </div>

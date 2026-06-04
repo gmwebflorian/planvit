@@ -66,23 +66,23 @@ export default async function DashboardPage() {
             </div>
           )}
           <div className="flex flex-col">
-            <span className="font-semibold leading-tight" style={{ color: '#FFFFFF' }}>
+            <span className="font-semibold leading-tight" style={{ color: '#0F0F0F' }}>
               Bonjour, {displayName} 👋
             </span>
-            <span className="text-xs capitalize" style={{ color: '#A0A0A0' }}>
+            <span className="text-xs capitalize" style={{ color: '#6B6457' }}>
               {formatDate(new Date())}
             </span>
           </div>
         </div>
         <Link href="/profile">
-          <Settings size={22} color="#A0A0A0" strokeWidth={1.5} />
+          <Settings size={22} color="#6B6457" strokeWidth={1.5} />
         </Link>
       </div>
 
       {/* Calorie ring */}
       <div
         className="rounded-3xl p-6 flex flex-col items-center"
-        style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }}
+        style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}
       >
         <CalorieRing
           consumed={Math.round(totalCalories)}
@@ -94,9 +94,9 @@ export default async function DashboardPage() {
       {/* Macro bars */}
       <div
         className="rounded-3xl px-5 py-4 flex flex-col gap-4"
-        style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }}
+        style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}
       >
-        <span className="font-semibold" style={{ color: '#FFFFFF' }}>Macronutriments</span>
+        <span className="font-semibold" style={{ color: '#0F0F0F' }}>Macronutriments</span>
         <MacroBar
           label="🟠 Protéines"
           current={Math.round(totalProtein)}
@@ -125,7 +125,7 @@ export default async function DashboardPage() {
 
       {/* Meal sections */}
       <div className="flex flex-col gap-3">
-        <span className="font-semibold" style={{ color: '#FFFFFF' }}>Repas du jour</span>
+        <span className="font-semibold" style={{ color: '#0F0F0F' }}>Repas du jour</span>
         {MEAL_TYPES.map((type) => (
           <MealSection
             key={type}

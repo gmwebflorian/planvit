@@ -50,13 +50,13 @@ export default async function FoodDetailPage({ params }: { params: Promise<{ id:
   }
 
   return (
-    <div className="flex flex-col min-h-screen px-4 pt-5 gap-5" style={{ backgroundColor: '#0F0F0F' }}>
+    <div className="flex flex-col min-h-screen px-4 pt-5 gap-5" style={{ backgroundColor: '#E8E2D6' }}>
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link href="/" className="p-1">
-          <ArrowLeft size={22} color="#FFFFFF" />
+          <ArrowLeft size={22} color="#0F0F0F" />
         </Link>
-        <span className="font-semibold text-lg" style={{ color: '#FFFFFF' }}>
+        <span className="font-semibold text-lg" style={{ color: '#0F0F0F' }}>
           Détail de l&apos;aliment
         </span>
       </div>
@@ -64,19 +64,19 @@ export default async function FoodDetailPage({ params }: { params: Promise<{ id:
       {/* Food card */}
       <div
         className="rounded-2xl p-5 flex flex-col gap-4"
-        style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }}
+        style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}
       >
         <div className="flex flex-col gap-1">
           <div className="flex items-start justify-between gap-2">
-            <h2 className="text-xl font-bold" style={{ color: '#FFFFFF' }}>{entry.food_name}</h2>
+            <h2 className="text-xl font-bold" style={{ color: '#0F0F0F' }}>{entry.food_name}</h2>
             <FavoriteButton isFavorite={isFavorite} food={favoriteFood} />
           </div>
-          <p className="text-sm" style={{ color: '#A0A0A0' }}>
+          <p className="text-sm" style={{ color: '#6B6457' }}>
             {MEAL_LABELS[entry.meal_type]} · {entry.quantity_g}g
           </p>
         </div>
 
-        <div className="h-px w-full" style={{ backgroundColor: '#2E2E2E' }} />
+        <div className="h-px w-full" style={{ backgroundColor: '#DDD7CC' }} />
 
         <div className="grid grid-cols-2 gap-3">
           <Macro label="Calories" value={`${Math.round(entry.calories)} kcal`} color="#FF6B2B" />
@@ -88,7 +88,7 @@ export default async function FoodDetailPage({ params }: { params: Promise<{ id:
           )}
         </div>
 
-        <p className="text-xs" style={{ color: '#A0A0A0' }}>
+        <p className="text-xs" style={{ color: '#6B6457' }}>
           Ajouté le {new Date(entry.created_at).toLocaleDateString('fr-FR', {
             day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
           })}
@@ -100,7 +100,7 @@ export default async function FoodDetailPage({ params }: { params: Promise<{ id:
         <button
           type="submit"
           className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-semibold"
-          style={{ backgroundColor: '#1A1A1A', border: '1px solid #EF4444', color: '#EF4444' }}
+          style={{ backgroundColor: '#FFFFFF', border: '1px solid #EF4444', color: '#EF4444' }}
         >
           <Trash2 size={18} />
           Supprimer cet aliment
@@ -112,8 +112,8 @@ export default async function FoodDetailPage({ params }: { params: Promise<{ id:
 
 function Macro({ label, value, color }: { label: string; value: string; color: string }) {
   return (
-    <div className="rounded-xl p-3 flex flex-col gap-1" style={{ backgroundColor: '#242424' }}>
-      <span className="text-xs" style={{ color: '#A0A0A0' }}>{label}</span>
+    <div className="rounded-xl p-3 flex flex-col gap-1" style={{ backgroundColor: '#F0EBE3' }}>
+      <span className="text-xs" style={{ color: '#6B6457' }}>{label}</span>
       <span className="text-lg font-bold tabular-nums" style={{ color }}>{value}</span>
     </div>
   )

@@ -14,14 +14,14 @@ export default function MacroBar({ label, current, goal, color, unit = 'g' }: Ma
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium" style={{ color: '#FFFFFF' }}>{label}</span>
-        <span className="text-sm tabular-nums" style={{ color: '#A0A0A0' }}>
+        <span className="text-sm font-medium" style={{ color: '#0F0F0F' }}>{label}</span>
+        <span className="text-sm tabular-nums" style={{ color: '#6B6457' }}>
           {current}{unit} / {goal}{unit}
         </span>
       </div>
 
       {/* Track */}
-      <div className="h-2.5 rounded-full" style={{ backgroundColor: '#242424' }}>
+      <div className="h-2.5 rounded-full" style={{ backgroundColor: '#F0EBE3' }}>
         <div
           className="h-2.5 rounded-full transition-all duration-500"
           style={{

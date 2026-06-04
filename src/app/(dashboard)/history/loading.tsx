@@ -1,5 +1,5 @@
 function Skel({ w, h, rounded = 'rounded' }: { w: string; h: string; rounded?: string }) {
-  return <div className={`${w} ${h} ${rounded} animate-pulse`} style={{ backgroundColor: '#2E2E2E' }} />
+  return <div className={`${w} ${h} ${rounded} animate-pulse`} style={{ backgroundColor: '#DDD7CC' }} />
 }
 
 export default function Loading() {
@@ -19,11 +19,11 @@ export default function Loading() {
       </div>
 
       {/* Chart */}
-      <div className="rounded-3xl p-5" style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }}>
+      <div className="rounded-3xl p-5" style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}>
         <Skel w="w-32" h="h-4" />
         <div className="mt-4 flex items-end gap-1 h-32">
           {[40, 65, 50, 80, 55, 70, 45, 90, 60, 75, 50, 85, 40, 70].map((h, i) => (
-            <div key={i} className="flex-1 rounded-t animate-pulse" style={{ height: `${h}%`, backgroundColor: '#2E2E2E' }} />
+            <div key={i} className="flex-1 rounded-t animate-pulse" style={{ height: `${h}%`, backgroundColor: '#DDD7CC' }} />
           ))}
         </div>
       </div>
@@ -31,7 +31,7 @@ export default function Loading() {
       {/* Stats row */}
       <div className="grid grid-cols-3 gap-3">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="rounded-2xl p-4 flex flex-col gap-2" style={{ backgroundColor: '#1A1A1A', border: '1px solid #2E2E2E' }}>
+          <div key={i} className="rounded-2xl p-4 flex flex-col gap-2" style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}>
             <Skel w="w-12" h="h-3" />
             <Skel w="w-16" h="h-5" />
           </div>
