@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Plan your nutrition and training with PlanVIT',
     start_url: '/',
     display: 'standalone',
-    background_color: '#0F0F0F',
-    theme_color: '#0F0F0F',
+    background_color: '#E8E2D6',
+    theme_color: '#E8E2D6',
     icons: [
       {
         src: '/icon-192x192.png',
