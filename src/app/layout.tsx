@@ -10,6 +10,12 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "PlanVIT",
   description: "Plan your nutrition and training with PlanVIT",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "PlanVIT",
+  },
 };
 
 export default function RootLayout({
