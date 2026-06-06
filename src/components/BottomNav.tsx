@@ -17,7 +17,7 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around px-2 pb-safe"
+      className="fixed bottom-0 left-0 right-0 z-50 flex items-center pb-safe"
       style={{ backgroundColor: '#FFFFFF', borderTop: '1px solid #DDD7CC', height: '72px' }}
     >
       {tabs.map(({ href, icon: Icon, label, isFab }) => {
@@ -25,7 +25,7 @@ export default function BottomNav() {
 
         if (isFab) {
           return (
-            <Link key={href} href={href} className="flex flex-col items-center">
+            <Link key={href} href={href} className="flex-1 flex flex-col items-center justify-center">
               <span
                 className="w-12 h-12 rounded-full flex items-center justify-center shadow-md"
                 style={{ backgroundColor: '#FF6B2B' }}
@@ -40,7 +40,7 @@ export default function BottomNav() {
           <Link
             key={href}
             href={href}
-            className="flex flex-col items-center gap-1 px-3 min-w-[56px]"
+            className="flex-1 flex flex-col items-center justify-center gap-1"
           >
             <Icon
               size={22}
