@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation'
-import { Bike, Check, Unlink, RefreshCw, Flame, Clock, MapPin } from 'lucide-react'
+import { Bike, Check, Unlink, RefreshCw, Zap, Flame, Clock, MapPin } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getProfile, getRecentStravaActivities } from '@/lib/supabase/queries'
-import { connectStrava, disconnectStrava, syncStrava } from './actions'
+import { connectStrava, disconnectStrava, syncStrava, enableStravaWebhook } from './actions'
 import type { StravaActivity } from '@/types'
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -12,6 +12,12 @@ const ERROR_MESSAGES: Record<string, string> = {
   save_failed: "Impossible d'enregistrer la connexion Strava.",
   not_connected: "Connecte d'abord ton compte Strava.",
   sync_failed: 'La synchronisation a échoué. Réessaie dans quelques instants.',
+  webhook_failed: "Impossible d'activer la synchronisation automatique. Réessaie plus tard.",
+}
+
+const WEBHOOK_MESSAGES: Record<string, string> = {
+  created: 'Synchronisation automatique activée ! Tes nouvelles activités Strava seront ajoutées toutes seules.',
+  exists: 'La synchronisation automatique est déjà active sur cette app.',
 }
 
 const SPORT_LABELS: Record<string, string> = {
@@ -79,7 +85,7 @@ function ActivityCard({ activity }: { activity: StravaActivity }) {
 export default async function StravaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ connected?: string; synced?: string; error?: string }>
+  searchParams: Promise<{ connected?: string; synced?: string; webhook?: string; error?: string }>
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -88,7 +94,7 @@ export default async function StravaPage({
   const profile = await getProfile(supabase, user.id)
   if (!profile) redirect('/login')
 
-  const { connected, synced, error } = await searchParams
+  const { connected, synced, webhook, error } = await searchParams
   const isConnected = !!profile.strava_athlete_id && !!profile.strava_access_token
 
   const activities = isConnected ? await getRecentStravaActivities(supabase, user.id, 15) : []
@@ -111,6 +117,11 @@ export default async function StravaPage({
           {Number(synced) > 0
             ? `${synced} nouvelle${Number(synced) > 1 ? 's' : ''} activité${Number(synced) > 1 ? 's' : ''} synchronisée${Number(synced) > 1 ? 's' : ''} !`
             : 'Tout est déjà à jour, aucune nouvelle activité.'}
+        </div>
+      )}
+      {webhook && (
+        <div className="px-4 py-3 rounded-xl text-sm font-medium" style={{ backgroundColor: '#DCFCE7', color: '#166534' }}>
+          {WEBHOOK_MESSAGES[webhook] ?? 'Synchronisation automatique mise à jour.'}
         </div>
       )}
       {error && (
@@ -180,6 +191,34 @@ export default async function StravaPage({
           </form>
         )}
       </div>
+
+      {/* Automatic sync via webhook */}
+      {isConnected && (
+        <div className="rounded-2xl p-5 flex flex-col gap-3" style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}>
+          <div className="flex items-center gap-3">
+            <span className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: '#FFF1E8' }}>
+              <Zap size={18} color="#FF6B2B" strokeWidth={2.5} />
+            </span>
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold" style={{ color: '#0F0F0F' }}>Synchronisation automatique</span>
+              <span className="text-xs" style={{ color: '#6B6457' }}>Plus besoin de cliquer sur « Synchroniser »</span>
+            </div>
+          </div>
+          <p className="text-sm" style={{ color: '#6B6457' }}>
+            Active les notifications Strava pour que chaque nouvelle activité soit ajoutée à PlanVIT automatiquement, dès la fin de ta sortie.
+          </p>
+          <form action={enableStravaWebhook}>
+            <button
+              type="submit"
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-opacity active:opacity-70"
+              style={{ backgroundColor: '#F0EBE3', color: '#0F0F0F', border: '1px solid #DDD7CC' }}
+            >
+              <Zap size={16} />
+              Activer la synchronisation automatique
+            </button>
+          </form>
+        </div>
+      )}
 
       {/* Activities list */}
       {isConnected && (

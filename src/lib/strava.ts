@@ -93,3 +93,20 @@ export async function fetchStravaActivityDetail(accessToken: string, activityId:
   if (!res.ok) throw new Error(`Strava activity detail fetch failed: ${res.status}`)
   return res.json()
 }
+
+const STRAVA_PUSH_SUBSCRIPTIONS_URL = 'https://www.strava.com/api/v3/push_subscriptions'
+
+export async function createStravaPushSubscription(callbackUrl: string): Promise<{ id: number }> {
+  const body = new URLSearchParams({
+    client_id: process.env.STRAVA_CLIENT_ID!,
+    client_secret: process.env.STRAVA_CLIENT_SECRET!,
+    callback_url: callbackUrl,
+    verify_token: process.env.STRAVA_VERIFY_TOKEN!,
+  })
+  const res = await fetch(STRAVA_PUSH_SUBSCRIPTIONS_URL, { method: 'POST', body })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Strava push subscription creation failed: ${res.status} ${text}`)
+  }
+  return res.json()
+}

@@ -10,6 +10,7 @@ import {
   refreshStravaToken,
   fetchStravaActivities,
   fetchStravaActivityDetail,
+  createStravaPushSubscription,
   type StravaDetailedActivity,
 } from '@/lib/strava'
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -153,4 +154,26 @@ export async function syncStrava() {
   revalidatePath('/journal')
 
   redirect(errorCode ? `/strava?error=${errorCode}` : `/strava?synced=${syncedCount}`)
+}
+
+export async function enableStravaWebhook() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const headersList = await headers()
+  const origin = headersList.get('origin') ?? ''
+  const callbackUrl = `${origin}/api/strava/webhook`
+
+  let status: 'created' | 'exists' | 'failed' = 'failed'
+  try {
+    await createStravaPushSubscription(callbackUrl)
+    status = 'created'
+  } catch (e) {
+    if (e instanceof Error && e.message.toLowerCase().includes('already exists')) {
+      status = 'exists'
+    }
+  }
+
+  redirect(`/strava?webhook=${status}`)
 }
