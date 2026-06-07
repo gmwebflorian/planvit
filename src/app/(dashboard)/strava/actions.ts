@@ -165,14 +165,21 @@ export async function enableStravaWebhook() {
   const origin = headersList.get('origin') ?? ''
   const callbackUrl = `${origin}/api/strava/webhook`
 
-  let status: 'created' | 'exists' | 'failed' = 'failed'
+  let status: 'created' | 'exists' | null = null
+  let failureDetail = ''
   try {
     await createStravaPushSubscription(callbackUrl)
     status = 'created'
   } catch (e) {
-    if (e instanceof Error && e.message.toLowerCase().includes('already exists')) {
+    const message = e instanceof Error ? e.message : ''
+    failureDetail = message
+    if (message.toLowerCase().includes('already exists')) {
       status = 'exists'
     }
+  }
+
+  if (!status) {
+    redirect(`/strava?error=webhook_failed&detail=${encodeURIComponent(failureDetail.slice(0, 200))}`)
   }
 
   redirect(`/strava?webhook=${status}`)

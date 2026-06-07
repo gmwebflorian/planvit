@@ -85,7 +85,7 @@ function ActivityCard({ activity }: { activity: StravaActivity }) {
 export default async function StravaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ connected?: string; synced?: string; webhook?: string; error?: string }>
+  searchParams: Promise<{ connected?: string; synced?: string; webhook?: string; error?: string; detail?: string }>
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -94,7 +94,7 @@ export default async function StravaPage({
   const profile = await getProfile(supabase, user.id)
   if (!profile) redirect('/login')
 
-  const { connected, synced, webhook, error } = await searchParams
+  const { connected, synced, webhook, error, detail } = await searchParams
   const isConnected = !!profile.strava_athlete_id && !!profile.strava_access_token
 
   const activities = isConnected ? await getRecentStravaActivities(supabase, user.id, 15) : []
@@ -125,8 +125,9 @@ export default async function StravaPage({
         </div>
       )}
       {error && (
-        <div className="px-4 py-3 rounded-xl text-sm font-medium" style={{ backgroundColor: '#FEE2E2', color: '#991B1B' }}>
-          {ERROR_MESSAGES[error] ?? 'Une erreur est survenue.'}
+        <div className="px-4 py-3 rounded-xl text-sm font-medium flex flex-col gap-1" style={{ backgroundColor: '#FEE2E2', color: '#991B1B' }}>
+          <span>{ERROR_MESSAGES[error] ?? 'Une erreur est survenue.'}</span>
+          {detail && <span className="text-xs font-normal opacity-80 break-all">{detail}</span>}
         </div>
       )}
 
