@@ -3,6 +3,7 @@ import { Bike, Check, Unlink, RefreshCw, Zap, Flame, Clock, MapPin } from 'lucid
 import { createClient } from '@/lib/supabase/server'
 import { getProfile, getRecentStravaActivities } from '@/lib/supabase/queries'
 import { connectStrava, disconnectStrava, syncStrava, enableStravaWebhook } from './actions'
+import { listStravaPushSubscriptions } from '@/lib/strava'
 import type { StravaActivity } from '@/types'
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -98,6 +99,14 @@ export default async function StravaPage({
   const isConnected = !!profile.strava_athlete_id && !!profile.strava_access_token
 
   const activities = isConnected ? await getRecentStravaActivities(supabase, user.id, 15) : []
+
+  let isWebhookActive = false
+  if (isConnected) {
+    try {
+      const subscriptions = await listStravaPushSubscriptions()
+      isWebhookActive = subscriptions.length > 0
+    } catch {}
+  }
 
   return (
     <div className="flex flex-col gap-4 pt-3 px-4 pb-6">
@@ -208,16 +217,26 @@ export default async function StravaPage({
           <p className="text-sm" style={{ color: '#6B6457' }}>
             Active les notifications Strava pour que chaque nouvelle activité soit ajoutée à PlanVIT automatiquement, dès la fin de ta sortie.
           </p>
-          <form action={enableStravaWebhook}>
-            <button
-              type="submit"
-              className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-opacity active:opacity-70"
-              style={{ backgroundColor: '#F0EBE3', color: '#0F0F0F', border: '1px solid #DDD7CC' }}
+          {isWebhookActive ? (
+            <div
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm"
+              style={{ backgroundColor: '#DCFCE7', color: '#166534' }}
             >
-              <Zap size={16} />
-              Activer la synchronisation automatique
-            </button>
-          </form>
+              <Check size={16} strokeWidth={3} />
+              Synchronisation automatique active
+            </div>
+          ) : (
+            <form action={enableStravaWebhook}>
+              <button
+                type="submit"
+                className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-opacity active:opacity-70"
+                style={{ backgroundColor: '#F0EBE3', color: '#0F0F0F', border: '1px solid #DDD7CC' }}
+              >
+                <Zap size={16} />
+                Activer la synchronisation automatique
+              </button>
+            </form>
+          )}
         </div>
       )}
 

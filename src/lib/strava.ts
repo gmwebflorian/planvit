@@ -110,3 +110,13 @@ export async function createStravaPushSubscription(callbackUrl: string): Promise
   }
   return res.json()
 }
+
+export async function listStravaPushSubscriptions(): Promise<{ id: number; callback_url: string }[]> {
+  const params = new URLSearchParams({
+    client_id: process.env.STRAVA_CLIENT_ID!,
+    client_secret: process.env.STRAVA_CLIENT_SECRET!,
+  })
+  const res = await fetch(`${STRAVA_PUSH_SUBSCRIPTIONS_URL}?${params.toString()}`, { cache: 'no-store' })
+  if (!res.ok) throw new Error(`Strava push subscription list failed: ${res.status}`)
+  return res.json()
+}
