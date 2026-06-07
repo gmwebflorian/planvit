@@ -1,5 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin'
-import { refreshStravaToken, fetchStravaActivityDetail, type StravaDetailedActivity } from '@/lib/strava'
+import { refreshStravaToken, fetchStravaActivityDetail, isOwnStravaPushSubscription, type StravaDetailedActivity } from '@/lib/strava'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
@@ -101,7 +101,11 @@ async function handleActivityEvent(event: StravaWebhookEvent) {
 export async function POST(request: NextRequest) {
   const event: StravaWebhookEvent = await request.json()
 
-  if (event.object_type === 'activity') {
+  // Strava doesn't sign webhook payloads. The subscription_id is only
+  // discoverable with our client_id/client_secret, so verifying it against our
+  // own active subscriptions stops third parties from forging events (e.g. to
+  // delete another user's activities or trigger token refreshes on their behalf).
+  if (event.object_type === 'activity' && (await isOwnStravaPushSubscription(event.subscription_id))) {
     await handleActivityEvent(event)
   }
 

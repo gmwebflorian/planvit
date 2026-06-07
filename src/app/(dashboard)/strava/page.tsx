@@ -9,6 +9,7 @@ import type { StravaActivity } from '@/types'
 const ERROR_MESSAGES: Record<string, string> = {
   denied: "Tu as refusé l'autorisation Strava.",
   missing_code: 'Une erreur est survenue lors de la connexion à Strava.',
+  invalid_state: 'La demande de connexion a expiré ou est invalide. Réessaie.',
   token_exchange: "Impossible d'échanger le code d'autorisation avec Strava.",
   save_failed: "Impossible d'enregistrer la connexion Strava.",
   not_connected: "Connecte d'abord ton compte Strava.",

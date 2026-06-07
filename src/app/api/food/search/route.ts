@@ -62,17 +62,25 @@ async function searchCustomFoods(query: string): Promise<FoodSearchResult[]> {
   if (!user) return []
 
   const singular = query.length > 3 && query.endsWith('s') ? query.slice(0, -1) : null
-  const orFilter = singular
-    ? `name.ilike.%${query}%,name.ilike.%${singular}%`
-    : `name.ilike.%${query}%`
 
-  const { data } = await supabase
-    .from('custom_foods')
-    .select('id, name, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, creator_name')
-    .or(orFilter)
-    .limit(20)
+  const select = 'id, name, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, creator_name'
+  const queries = [
+    supabase.from('custom_foods').select(select).ilike('name', `%${query}%`).limit(20),
+    ...(singular
+      ? [supabase.from('custom_foods').select(select).ilike('name', `%${singular}%`).limit(20)]
+      : []),
+  ]
 
-  return (data ?? []).map((f) => ({
+  const results = await Promise.all(queries)
+  const seen = new Set<string>()
+  const data = []
+  for (const res of results) {
+    for (const f of res.data ?? []) {
+      if (!seen.has(f.id)) { seen.add(f.id); data.push(f) }
+    }
+  }
+
+  return data.map((f) => ({
     id: f.id,
     name: f.name,
     brand: null,

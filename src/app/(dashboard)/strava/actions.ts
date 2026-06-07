@@ -4,13 +4,15 @@ import { createClient } from '@/lib/supabase/server'
 import { getProfile } from '@/lib/supabase/queries'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { headers } from 'next/headers'
+import { headers, cookies } from 'next/headers'
+import { randomBytes } from 'crypto'
 import {
   buildStravaAuthorizeUrl,
   refreshStravaToken,
   fetchStravaActivities,
   fetchStravaActivityDetail,
   createStravaPushSubscription,
+  STRAVA_OAUTH_STATE_COOKIE,
   type StravaDetailedActivity,
 } from '@/lib/strava'
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -25,7 +27,19 @@ export async function connectStrava() {
   const origin = headersList.get('origin') ?? ''
   const redirectUri = `${origin}/api/strava/callback`
 
-  redirect(buildStravaAuthorizeUrl(redirectUri))
+  // CSRF protection: bind the authorization request to this browser session so
+  // the callback can refuse to link an attacker-supplied Strava account.
+  const state = randomBytes(16).toString('hex')
+  const cookieStore = await cookies()
+  cookieStore.set(STRAVA_OAUTH_STATE_COOKIE, state, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+    maxAge: 600,
+    path: '/',
+  })
+
+  redirect(buildStravaAuthorizeUrl(redirectUri, state))
 }
 
 export async function disconnectStrava() {

@@ -1,17 +1,29 @@
 import { createClient } from '@/lib/supabase/server'
-import { exchangeStravaCode } from '@/lib/strava'
+import { exchangeStravaCode, STRAVA_OAUTH_STATE_COOKIE } from '@/lib/strava'
+import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
   const error = searchParams.get('error')
+  const state = searchParams.get('state')
 
   if (error) {
     return NextResponse.redirect(`${origin}/strava?error=denied`)
   }
   if (!code) {
     return NextResponse.redirect(`${origin}/strava?error=missing_code`)
+  }
+
+  const cookieStore = await cookies()
+  const expectedState = cookieStore.get(STRAVA_OAUTH_STATE_COOKIE)?.value
+  cookieStore.delete(STRAVA_OAUTH_STATE_COOKIE)
+
+  // Reject the exchange if the state doesn't match — prevents an attacker from
+  // tricking a logged-in user into linking the attacker's own Strava account.
+  if (!state || !expectedState || state !== expectedState) {
+    return NextResponse.redirect(`${origin}/strava?error=invalid_state`)
   }
 
   const supabase = await createClient()

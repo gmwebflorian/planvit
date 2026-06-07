@@ -2,14 +2,16 @@ const STRAVA_OAUTH_URL = 'https://www.strava.com/oauth/authorize'
 const STRAVA_TOKEN_URL = 'https://www.strava.com/oauth/token'
 
 export const STRAVA_SCOPE = 'activity:read_all'
+export const STRAVA_OAUTH_STATE_COOKIE = 'strava_oauth_state'
 
-export function buildStravaAuthorizeUrl(redirectUri: string): string {
+export function buildStravaAuthorizeUrl(redirectUri: string, state: string): string {
   const params = new URLSearchParams({
     client_id: process.env.STRAVA_CLIENT_ID!,
     redirect_uri: redirectUri,
     response_type: 'code',
     approval_prompt: 'auto',
     scope: STRAVA_SCOPE,
+    state,
   })
   return `${STRAVA_OAUTH_URL}?${params.toString()}`
 }
@@ -119,4 +121,16 @@ export async function listStravaPushSubscriptions(): Promise<{ id: number; callb
   const res = await fetch(`${STRAVA_PUSH_SUBSCRIPTIONS_URL}?${params.toString()}`, { cache: 'no-store' })
   if (!res.ok) throw new Error(`Strava push subscription list failed: ${res.status}`)
   return res.json()
+}
+
+// Strava webhook events carry no signature. The subscription_id is only knowable
+// by whoever holds our client_id/client_secret, so checking it against our own
+// active subscriptions lets us reject events forged by third parties.
+export async function isOwnStravaPushSubscription(subscriptionId: number): Promise<boolean> {
+  try {
+    const subscriptions = await listStravaPushSubscriptions()
+    return subscriptions.some((s) => s.id === subscriptionId)
+  } catch {
+    return false
+  }
 }
