@@ -83,6 +83,20 @@ export async function getPeriodStravaCalories(
   return map
 }
 
+export async function getRecentStravaActivities(
+  supabase: SupabaseClient,
+  userId: string,
+  limit = 10
+): Promise<StravaActivity[]> {
+  const { data } = await supabase
+    .from('strava_activities')
+    .select('*')
+    .eq('user_id', userId)
+    .order('start_date', { ascending: false })
+    .limit(limit)
+  return data ?? []
+}
+
 export async function getFoodEntry(
   supabase: SupabaseClient,
   id: string

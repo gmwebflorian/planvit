@@ -52,3 +52,44 @@ export async function refreshStravaToken(refreshToken: string): Promise<StravaTo
   if (!res.ok) throw new Error(`Strava token refresh failed: ${res.status}`)
   return res.json()
 }
+
+const STRAVA_API_BASE = 'https://www.strava.com/api/v3'
+
+export interface StravaSummaryActivity {
+  id: number
+  name: string
+  sport_type: string
+  start_date: string
+  elapsed_time: number
+  moving_time: number
+  distance: number | null
+  total_elevation_gain: number | null
+  average_heartrate?: number | null
+  max_heartrate?: number | null
+  average_watts?: number | null
+  kilojoules?: number | null
+}
+
+export interface StravaDetailedActivity extends StravaSummaryActivity {
+  calories?: number | null
+}
+
+export async function fetchStravaActivities(accessToken: string, after?: number): Promise<StravaSummaryActivity[]> {
+  const params = new URLSearchParams({ per_page: '30' })
+  if (after) params.set('after', String(after))
+  const res = await fetch(`${STRAVA_API_BASE}/athlete/activities?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    cache: 'no-store',
+  })
+  if (!res.ok) throw new Error(`Strava activities fetch failed: ${res.status}`)
+  return res.json()
+}
+
+export async function fetchStravaActivityDetail(accessToken: string, activityId: number): Promise<StravaDetailedActivity> {
+  const res = await fetch(`${STRAVA_API_BASE}/activities/${activityId}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    cache: 'no-store',
+  })
+  if (!res.ok) throw new Error(`Strava activity detail fetch failed: ${res.status}`)
+  return res.json()
+}
