@@ -50,14 +50,11 @@ function normName(s: string) {
   return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/['']/g, "'")
 }
 
-// Returns null for today (no need to call it out), otherwise a friendly label
-// so the user clearly sees they're logging a meal for a past day.
+// Returns null for today (no need to call it out), otherwise the formatted
+// date so the user clearly sees which day they're logging a meal for.
 function pastDateLabel(dateStr: string, today: string): string | null {
   if (dateStr === today) return null
   const d = new Date(dateStr + 'T00:00:00')
-  const yesterday = new Date(today + 'T00:00:00')
-  yesterday.setDate(yesterday.getDate() - 1)
-  if (dateStr === yesterday.toISOString().split('T')[0]) return 'hier'
   return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
 }
 
