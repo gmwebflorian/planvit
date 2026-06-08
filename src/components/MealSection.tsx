@@ -12,9 +12,10 @@ const MEAL_LABELS: Record<MealType, string> = {
 interface MealSectionProps {
   type: MealType
   entries: FoodEntry[]
+  date: string
 }
 
-export default function MealSection({ type, entries }: MealSectionProps) {
+export default function MealSection({ type, entries, date }: MealSectionProps) {
   const totalCal = entries.reduce((sum, e) => sum + e.calories, 0)
 
   return (
@@ -35,7 +36,7 @@ export default function MealSection({ type, entries }: MealSectionProps) {
           )}
         </div>
         <Link
-          href={`/add-food?meal=${type}`}
+          href={`/add-food?meal=${type}&date=${date}`}
           className="w-7 h-7 rounded-full flex items-center justify-center"
           style={{ backgroundColor: '#F0EBE3' }}
         >

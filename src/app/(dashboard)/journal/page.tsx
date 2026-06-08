@@ -116,6 +116,7 @@ export default async function JournalPage({
           <MealSection
             key={type}
             type={type}
+            date={date}
             entries={entries.filter((e) => e.meal_type === type)}
           />
         ))}

@@ -130,6 +130,7 @@ export default async function DashboardPage() {
           <MealSection
             key={type}
             type={type}
+            date={today}
             entries={entries.filter((e) => e.meal_type === type)}
           />
         ))}

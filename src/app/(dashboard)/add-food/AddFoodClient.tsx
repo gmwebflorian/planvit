@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Search, ArrowLeft, Plus, ChevronRight, Star } from 'lucide-react'
+import { Search, ArrowLeft, Plus, ChevronRight, Star, CalendarClock } from 'lucide-react'
 import type { FoodSearchResult } from '@/app/api/food/search/route'
 import type { MealType } from '@/types'
 import { addFoodEntry, createCustomFood } from '@/app/(dashboard)/actions'
@@ -50,10 +50,39 @@ function normName(s: string) {
   return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/['']/g, "'")
 }
 
+// Returns null for today (no need to call it out), otherwise a friendly label
+// so the user clearly sees they're logging a meal for a past day.
+function pastDateLabel(dateStr: string, today: string): string | null {
+  if (dateStr === today) return null
+  const d = new Date(dateStr + 'T00:00:00')
+  const yesterday = new Date(today + 'T00:00:00')
+  yesterday.setDate(yesterday.getDate() - 1)
+  if (dateStr === yesterday.toISOString().split('T')[0]) return 'hier'
+  return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+}
+
+function DateBadge({ label }: { label: string }) {
+  return (
+    <div className="px-4 pb-3">
+      <span
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold capitalize"
+        style={{ backgroundColor: '#FFF1E8', color: '#FF6B2B' }}
+      >
+        <CalendarClock size={13} strokeWidth={2.5} />
+        Ajout pour {label}
+      </span>
+    </div>
+  )
+}
+
 export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSearchResult[] }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const initialMeal = (searchParams.get('meal') as MealType) ?? 'breakfast'
+  const today = new Date().toISOString().split('T')[0]
+  const dateParam = searchParams.get('date')
+  const entryDate = dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) && dateParam <= today ? dateParam : today
+  const dateLabel = pastDateLabel(entryDate, today)
 
   // Normalized set of favorite names for O(1) lookup
   const favNameSet = useRef(new Set(favorites.map((f) => normName(f.name))))
@@ -203,9 +232,10 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
         meal_type: meal,
         food_name: selected.name,
         quantity_g: qtyNum,
+        date: entryDate,
         ...calcMacros(selected, qtyNum),
       })
-      router.push('/')
+      router.push(entryDate === today ? '/' : `/journal?date=${entryDate}`)
       router.refresh()
     } catch {
       setSaving(false)
@@ -271,6 +301,7 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
           </button>
           <span className="font-semibold text-lg truncate" style={{ color: '#0F0F0F' }}>{selected.name}</span>
         </div>
+        {dateLabel && <DateBadge label={dateLabel} />}
 
         <div className="flex flex-col gap-4 px-4">
           <div className="rounded-2xl p-4" style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}>
@@ -358,6 +389,7 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
           <Plus size={18} color="#FFFFFF" />
         </button>
       </div>
+      {dateLabel && <DateBadge label={dateLabel} />}
 
       <div className="px-4 pb-3">
         <div className="flex items-center gap-3 rounded-2xl px-4 py-3"

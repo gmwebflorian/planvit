@@ -15,6 +15,7 @@ interface AddFoodEntryInput {
   fat_g: number
   fiber_g?: number | null
   custom_food_id?: string | null
+  date?: string
 }
 
 export async function addFoodEntry(input: AddFoodEntryInput) {
@@ -23,10 +24,12 @@ export async function addFoodEntry(input: AddFoodEntryInput) {
   if (!user) redirect('/login')
 
   const today = new Date().toISOString().split('T')[0]
+  // Allow logging past days (e.g. forgotten meals) but never future ones.
+  const date = input.date && input.date <= today ? input.date : today
 
   const { error } = await supabase.from('food_entries').insert({
     user_id: user.id,
-    date: today,
+    date,
     meal_type: input.meal_type,
     food_name: input.food_name,
     quantity_g: input.quantity_g,
@@ -40,6 +43,8 @@ export async function addFoodEntry(input: AddFoodEntryInput) {
 
   if (error) throw new Error(error.message)
   revalidatePath('/')
+  revalidatePath('/journal')
+  revalidatePath('/history')
 }
 
 export interface CreateCustomFoodInput {
