@@ -29,11 +29,10 @@ function calcMacros(food: FoodSearchResult, qty: number) {
 
 const SOURCE_STYLE: Record<string, { bg: string; color: string; label?: string }> = {
   ciqual: { bg: '#FF6B2B20', color: '#FF6B2B', label: 'Ciqual' },
-  off:    { bg: '#22C55E20', color: '#22C55E', label: 'OFF' },
   custom: { bg: '#A855F720', color: '#A855F7' },
 }
 
-function SourceBadge({ source, customLabel }: { source: 'off' | 'ciqual' | 'custom'; customLabel?: string }) {
+function SourceBadge({ source, customLabel }: { source: 'ciqual' | 'custom'; customLabel?: string }) {
   const s = SOURCE_STYLE[source]
   const label = source === 'custom' ? (customLabel ?? 'Moi') : (s.label ?? source)
   return (
