@@ -24,7 +24,7 @@ async function getFavorites(): Promise<FoodSearchResult[]> {
     carbs_per_100g: f.carbs_per_100g,
     fat_per_100g: f.fat_per_100g,
     fiber_per_100g: f.fiber_per_100g ?? null,
-    source: (f.source as 'ciqual' | 'off' | 'custom') ?? 'ciqual',
+    source: (f.source as 'ciqual' | 'custom') ?? 'ciqual',
     customLabel: f.custom_label ?? undefined,
   }))
 }

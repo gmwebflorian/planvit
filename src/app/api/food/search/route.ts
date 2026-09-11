@@ -11,7 +11,7 @@ export interface FoodSearchResult {
   carbs_per_100g: number
   fat_per_100g: number
   fiber_per_100g: number | null
-  source: 'off' | 'ciqual' | 'custom'
+  source: 'ciqual' | 'custom'
   customLabel?: string
   isFavorite?: boolean
 }
@@ -148,43 +148,6 @@ async function searchCiqual(query: string): Promise<FoodSearchResult[]> {
   }))
 }
 
-async function searchOpenFoodFacts(query: string): Promise<FoodSearchResult[]> {
-  const url = new URL('https://world.openfoodfacts.org/cgi/search.pl')
-  url.searchParams.set('search_terms', query)
-  url.searchParams.set('json', '1')
-  url.searchParams.set('page_size', '20')
-  url.searchParams.set('fields', 'id,product_name,brands,nutriments')
-  url.searchParams.set('search_simple', '1')
-  url.searchParams.set('action', 'process')
-
-  const res = await fetch(url.toString(), {
-    headers: { 'User-Agent': 'PlanVIT/1.0 (contact@planvit.app)' },
-    next: { revalidate: 3600 },
-  })
-  if (!res.ok) return []
-
-  const data = await res.json()
-  return (data.products ?? [])
-    .filter((p: Record<string, unknown>) => {
-      const n = p.nutriments as Record<string, number> | undefined
-      return p.product_name && n && (n['energy-kcal_100g'] ?? 0) > 0
-    })
-    .map((p: Record<string, unknown>) => {
-      const n = p.nutriments as Record<string, number>
-      return {
-        id: `off_${String(p.id ?? p.code ?? Math.random())}`,
-        name: String(p.product_name),
-        brand: p.brands ? String(p.brands).split(',')[0].trim() : null,
-        calories_per_100g: Math.round(n['energy-kcal_100g'] ?? 0),
-        protein_per_100g: Math.round((n['proteins_100g'] ?? 0) * 10) / 10,
-        carbs_per_100g: Math.round((n['carbohydrates_100g'] ?? 0) * 10) / 10,
-        fat_per_100g: Math.round((n['fat_100g'] ?? 0) * 10) / 10,
-        fiber_per_100g: n['fiber_100g'] != null ? Math.round(n['fiber_100g'] * 10) / 10 : null,
-        source: 'off' as const,
-      }
-    })
-    .slice(0, 20)
-}
 
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get('q')?.trim()
@@ -192,17 +155,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ results: [] })
   }
 
-  const [customResults, ciqualResults, offResults] = await Promise.allSettled([
+  const [customResults, ciqualResults] = await Promise.allSettled([
     searchCustomFoods(query),
     searchCiqual(query),
-    searchOpenFoodFacts(query),
   ])
 
   const custom = customResults.status === 'fulfilled' ? customResults.value : []
   const ciqual = ciqualResults.status === 'fulfilled' ? ciqualResults.value : []
-  const off    = offResults.status    === 'fulfilled' ? offResults.value    : []
 
-  // Custom foods first, then Ciqual/OFF deduplicated and ranked
+  // Custom foods first, then Ciqual deduplicated and ranked
   const seen = new Set<string>()
   const merged: FoodSearchResult[] = []
 
@@ -212,7 +173,7 @@ export async function GET(request: NextRequest) {
   }
 
   const rest: FoodSearchResult[] = []
-  for (const item of [...ciqual, ...off]) {
+  for (const item of ciqual) {
     const key = norm(item.name).slice(0, 40)
     if (!seen.has(key)) { seen.add(key); rest.push(item) }
   }
