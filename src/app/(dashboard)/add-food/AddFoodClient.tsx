@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Search, ArrowLeft, Plus, ChevronRight, Star, CalendarClock } from 'lucide-react'
+import { Search, ArrowLeft, Plus, ChevronRight, Star, CalendarClock, Camera, ChefHat, Loader2 } from 'lucide-react'
 import type { FoodSearchResult } from '@/app/api/food/search/route'
+import type { RecipeAnalysis } from '@/app/api/food/analyze-recipe/route'
 import type { MealType } from '@/types'
 import { addFoodEntry, createCustomFood } from '@/app/(dashboard)/actions'
 
@@ -83,7 +84,7 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
   // Normalized set of favorite names for O(1) lookup
   const favNameSet = useRef(new Set(favorites.map((f) => normName(f.name))))
 
-  const [step, setStep] = useState<'search' | 'quantity' | 'create'>('search')
+  const [step, setStep] = useState<'search' | 'quantity' | 'create' | 'recipe'>('search')
   const [query, setQuery] = useState('')
   // allResults = full sorted list (favorites first, then rest); displayCount = how many we show
   const [allResults, setAllResults] = useState<FoodSearchResult[]>([])
@@ -102,7 +103,14 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
   const [createFat, setCreateFat] = useState('')
   const [createFiber, setCreateFiber] = useState('')
 
+  const [recipeAnalysis, setRecipeAnalysis] = useState<RecipeAnalysis | null>(null)
+  const [recipeAnalyzing, setRecipeAnalyzing] = useState(false)
+  const [recipeServings, setRecipeServings] = useState(4)
+  const [recipeDishName, setRecipeDishName] = useState('')
+  const [recipeError, setRecipeError] = useState<string | null>(null)
+
   const inputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const sentinelRef = useRef<HTMLDivElement>(null)
 
@@ -141,6 +149,96 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
       setLoading(false)
     }
   }, [favorites]) // favorites is stable (server prop)
+
+  async function compressImage(file: File): Promise<{ base64: string; mediaType: string }> {
+    return new Promise((resolve, reject) => {
+      const img = new Image()
+      const url = URL.createObjectURL(file)
+      img.onload = () => {
+        URL.revokeObjectURL(url)
+        const MAX = 1024
+        let w = img.width, h = img.height
+        if (w > MAX || h > MAX) {
+          if (w > h) { h = Math.round(h * MAX / w); w = MAX }
+          else { w = Math.round(w * MAX / h); h = MAX }
+        }
+        const canvas = document.createElement('canvas')
+        canvas.width = w; canvas.height = h
+        canvas.getContext('2d')!.drawImage(img, 0, 0, w, h)
+        const base64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1]
+        resolve({ base64, mediaType: 'image/jpeg' })
+      }
+      img.onerror = reject
+      img.src = url
+    })
+  }
+
+  const handleRecipeFile = async (file: File) => {
+    setRecipeError(null)
+    setRecipeAnalyzing(true)
+    setStep('recipe')
+    try {
+      const { base64, mediaType } = await compressImage(file)
+      const res = await fetch('/api/food/analyze-recipe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: base64, mediaType }),
+      })
+      if (!res.ok) throw new Error('api_error')
+      const analysis: RecipeAnalysis = await res.json()
+      setRecipeAnalysis(analysis)
+      setRecipeServings(analysis.servings)
+      setRecipeDishName(analysis.dish_name)
+    } catch {
+      setRecipeError('Impossible d\'analyser la recette. Essaie avec une image plus nette.')
+    } finally {
+      setRecipeAnalyzing(false)
+    }
+  }
+
+  const recipePerServing = recipeAnalysis ? {
+    kcal: Math.round(recipeAnalysis.per_serving.kcal * recipeAnalysis.servings / recipeServings),
+    protein_g: Math.round(recipeAnalysis.per_serving.protein_g * recipeAnalysis.servings / recipeServings * 10) / 10,
+    carbs_g: Math.round(recipeAnalysis.per_serving.carbs_g * recipeAnalysis.servings / recipeServings * 10) / 10,
+    fat_g: Math.round(recipeAnalysis.per_serving.fat_g * recipeAnalysis.servings / recipeServings * 10) / 10,
+    fiber_g: recipeAnalysis.per_serving.fiber_g != null
+      ? Math.round(recipeAnalysis.per_serving.fiber_g * recipeAnalysis.servings / recipeServings * 10) / 10
+      : null,
+  } : null
+
+  const handleRecipeConfirm = async () => {
+    if (!recipeAnalysis || !recipePerServing) return
+    setSaving(true)
+    try {
+      const servingWeight = Math.round(recipeAnalysis.total_weight_g / recipeServings)
+      const per100 = (val: number) => Math.round(val / servingWeight * 100 * 10) / 10
+      const id = await createCustomFood({
+        name: recipeDishName.trim() || recipeAnalysis.dish_name,
+        calories_per_100g: per100(recipePerServing.kcal),
+        protein_per_100g: per100(recipePerServing.protein_g),
+        carbs_per_100g: per100(recipePerServing.carbs_g),
+        fat_per_100g: per100(recipePerServing.fat_g),
+        fiber_per_100g: recipePerServing.fiber_g != null ? per100(recipePerServing.fiber_g) : null,
+      })
+      setSelected({
+        id,
+        name: recipeDishName.trim() || recipeAnalysis.dish_name,
+        brand: null,
+        calories_per_100g: per100(recipePerServing.kcal),
+        protein_per_100g: per100(recipePerServing.protein_g),
+        carbs_per_100g: per100(recipePerServing.carbs_g),
+        fat_per_100g: per100(recipePerServing.fat_g),
+        fiber_per_100g: recipePerServing.fiber_g != null ? per100(recipePerServing.fiber_g) : null,
+        source: 'custom',
+      })
+      setQty(String(servingWeight))
+      setStep('quantity')
+    } catch {
+      // keep form open
+    } finally {
+      setSaving(false)
+    }
+  }
 
   const handleQueryChange = (val: string) => {
     setQuery(val)
@@ -368,6 +466,122 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
     )
   }
 
+  // ── Step: recipe scan ────────────────────────────────────────────────
+  if (step === 'recipe') {
+    return (
+      <div className="flex flex-col min-h-screen" style={{ backgroundColor: '#E8E2D6' }}>
+        <div className="flex items-center gap-3 px-4 pt-5 pb-4">
+          <button onClick={() => { setStep('search'); setRecipeAnalysis(null); setRecipeError(null) }} className="p-1">
+            <ArrowLeft size={22} color="#0F0F0F" />
+          </button>
+          <span className="font-semibold text-lg" style={{ color: '#0F0F0F' }}>Analyser une recette</span>
+        </div>
+
+        {recipeAnalyzing && (
+          <div className="flex flex-col items-center justify-center flex-1 gap-4 px-4">
+            <Loader2 size={36} color="#FF6B2B" className="animate-spin" />
+            <p className="text-sm text-center" style={{ color: '#6B6457' }}>Analyse en cours…<br />Ça prend quelques secondes.</p>
+          </div>
+        )}
+
+        {recipeError && (
+          <div className="flex flex-col items-center justify-center flex-1 gap-4 px-4">
+            <p className="text-sm text-center" style={{ color: '#6B6457' }}>{recipeError}</p>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-2 px-5 py-3 rounded-2xl font-medium"
+              style={{ backgroundColor: '#FF6B2B', color: '#FFFFFF' }}
+            >
+              <Camera size={18} /> Réessayer
+            </button>
+          </div>
+        )}
+
+        {!recipeAnalyzing && !recipeError && recipeAnalysis && recipePerServing && (
+          <div className="flex flex-col gap-4 px-4 pb-6">
+            {/* Dish name */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium uppercase tracking-wide" style={{ color: '#6B6457' }}>Nom du plat</label>
+              <input
+                type="text"
+                value={recipeDishName}
+                onChange={(e) => setRecipeDishName(e.target.value)}
+                className="rounded-xl px-4 py-3 text-base outline-none font-medium"
+                style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC', color: '#0F0F0F' }}
+              />
+            </div>
+
+            {/* Servings */}
+            <div className="rounded-2xl px-4 py-3 flex items-center justify-between" style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}>
+              <span className="text-sm font-medium" style={{ color: '#0F0F0F' }}>Nombre de portions</span>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setRecipeServings((s) => Math.max(1, s - 1))}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold"
+                  style={{ backgroundColor: '#F0EBE3', color: '#0F0F0F' }}
+                >−</button>
+                <span className="w-6 text-center font-semibold tabular-nums" style={{ color: '#0F0F0F' }}>{recipeServings}</span>
+                <button
+                  onClick={() => setRecipeServings((s) => s + 1)}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold"
+                  style={{ backgroundColor: '#F0EBE3', color: '#0F0F0F' }}
+                >+</button>
+              </div>
+            </div>
+
+            {/* Macros per serving */}
+            <div className="rounded-2xl p-4" style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}>
+              <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#6B6457' }}>
+                Par portion · {Math.round(recipeAnalysis.total_weight_g / recipeServings)}g
+              </p>
+              <div className="flex items-center justify-between">
+                <span className="text-2xl font-bold tabular-nums" style={{ color: '#FF6B2B' }}>{recipePerServing.kcal} kcal</span>
+                <div className="flex gap-3 text-sm tabular-nums flex-wrap">
+                  <span style={{ color: '#FF6B2B' }}>{recipePerServing.protein_g}g P</span>
+                  <span style={{ color: '#3B82F6' }}>{recipePerServing.carbs_g}g G</span>
+                  <span style={{ color: '#D97706' }}>{recipePerServing.fat_g}g L</span>
+                  {recipePerServing.fiber_g != null && <span style={{ color: '#10B981' }}>{recipePerServing.fiber_g}g F</span>}
+                </div>
+              </div>
+            </div>
+
+            {/* Ingredients list */}
+            <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}>
+              <p className="text-xs font-semibold uppercase tracking-wide px-4 pt-3 pb-2" style={{ color: '#6B6457' }}>Ingrédients détectés</p>
+              {recipeAnalysis.ingredients.map((ing, i) => (
+                <div key={i} className="flex items-center justify-between px-4 py-2" style={{ borderTop: i === 0 ? '1px solid #DDD7CC' : undefined }}>
+                  <span className="text-sm capitalize" style={{ color: '#0F0F0F' }}>{ing.name}</span>
+                  <span className="text-xs tabular-nums" style={{ color: '#6B6457' }}>{ing.quantity_g}g · {ing.kcal} kcal</span>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-xs text-center px-2" style={{ color: '#9B9287' }}>
+              Valeurs estimées par IA — ajuste si nécessaire
+            </p>
+
+            <button
+              onClick={handleRecipeConfirm}
+              disabled={saving}
+              className="w-full py-4 rounded-2xl font-bold text-lg disabled:opacity-50"
+              style={{ backgroundColor: '#FF6B2B', color: '#FFFFFF' }}
+            >
+              {saving ? 'Enregistrement…' : 'Créer et ajouter au journal'}
+            </button>
+          </div>
+        )}
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleRecipeFile(f) }}
+        />
+      </div>
+    )
+  }
+
   // ── Step: search ──────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col min-h-screen" style={{ backgroundColor: '#E8E2D6' }}>
@@ -376,6 +590,17 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
           <ArrowLeft size={22} color="#0F0F0F" />
         </button>
         <span className="font-semibold text-lg flex-1" style={{ color: '#0F0F0F' }}>Ajouter un aliment</span>
+        <button
+          onClick={() => {
+            setRecipeAnalysis(null); setRecipeError(null)
+            fileInputRef.current?.click()
+          }}
+          className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+          style={{ backgroundColor: '#F0EBE3' }}
+          aria-label="Scanner une recette"
+        >
+          <Camera size={16} color="#FF6B2B" />
+        </button>
         <button
           onClick={handleOpenCreate}
           className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
@@ -386,6 +611,13 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
         </button>
       </div>
       {dateLabel && <DateBadge label={dateLabel} />}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleRecipeFile(f) }}
+      />
 
       <div className="px-4 pb-3">
         <div className="flex items-center gap-3 rounded-2xl px-4 py-3"
@@ -483,8 +715,16 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
         )}
 
         {query.length === 0 && favorites.length === 0 && (
-          <div className="flex flex-col items-center py-16">
+          <div className="flex flex-col items-center gap-4 py-12">
             <p className="text-sm" style={{ color: '#6B6457' }}>Tape le nom d&apos;un aliment pour commencer</p>
+            <button
+              onClick={() => { setRecipeAnalysis(null); setRecipeError(null); fileInputRef.current?.click() }}
+              className="flex items-center gap-2 px-5 py-3 rounded-2xl font-medium"
+              style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC', color: '#6B6457' }}
+            >
+              <ChefHat size={16} color="#FF6B2B" />
+              Scanner une recette
+            </button>
           </div>
         )}
       </div>
