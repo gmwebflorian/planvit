@@ -1,11 +1,10 @@
 interface CalorieRingProps {
   consumed: number
   goal: number
-  burned: number
 }
 
-export default function CalorieRing({ consumed, goal, burned }: CalorieRingProps) {
-  const budget = goal + burned
+export default function CalorieRing({ consumed, goal }: CalorieRingProps) {
+  const budget = goal
   const remaining = Math.max(0, budget - consumed)
   const pct = Math.min(1, consumed / budget)
   const isOver = consumed > budget
@@ -71,15 +70,6 @@ export default function CalorieRing({ consumed, goal, burned }: CalorieRingProps
         </span>
       </div>
 
-      {burned > 0 && (
-        <div
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium"
-          style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC', color: '#22C55E' }}
-        >
-          <span>🔥</span>
-          <span>+{burned} kcal brûlées (Strava)</span>
-        </div>
-      )}
     </div>
   )
 }

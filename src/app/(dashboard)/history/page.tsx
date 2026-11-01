@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getProfile, getPeriodEntries, getPeriodStravaCalories, type PeriodEntry } from '@/lib/supabase/queries'
+import { getProfile, getPeriodEntries, type PeriodEntry } from '@/lib/supabase/queries'
 import CalorieChart from './CalorieChart'
 import PeriodToggle, { type Period } from './PeriodToggle'
 
@@ -49,10 +49,9 @@ export default async function HistoryPage({
 
   const { fromDate, toDate, dates } = buildDateRange(days)
 
-  const [profile, entries, stravaMap] = await Promise.all([
+  const [profile, entries] = await Promise.all([
     getProfile(supabase, user.id),
     getPeriodEntries(supabase, user.id, fromDate, toDate),
-    getPeriodStravaCalories(supabase, user.id, fromDate, toDate),
   ])
 
   if (!profile) redirect('/login')
@@ -62,19 +61,16 @@ export default async function HistoryPage({
 
   const dayStats = dates.map((date) => {
     const d = byDate[date] ?? { calories: 0, protein: 0, carbs: 0, fat: 0 }
-    const strava = Math.round(stravaMap[date] ?? 0)
-    const budget = goalCal + strava
     const calories = Math.round(d.calories)
     return {
       date,
       calories,
-      goal: budget,
+      goal: goalCal,
       protein: Math.round(d.protein),
       carbs: Math.round(d.carbs),
       fat: Math.round(d.fat),
-      strava,
       hasData: calories > 0,
-      inGoal: calories > 0 && calories <= budget * 1.1,
+      inGoal: calories > 0 && calories <= goalCal * 1.1,
     }
   })
 

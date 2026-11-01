@@ -2,13 +2,13 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, BookOpen, Plus, Bike, User } from 'lucide-react'
+import { Home, BookOpen, Plus, BarChart2, User } from 'lucide-react'
 
 const tabs = [
   { href: '/', icon: Home, label: "Aujourd'hui" },
   { href: '/journal', icon: BookOpen, label: 'Journal' },
   { href: '/add-food', icon: Plus, label: 'Ajouter', isFab: true },
-  { href: '/strava', icon: Bike, label: 'Strava' },
+  { href: '/history', icon: BarChart2, label: 'Historique' },
   { href: '/profile', icon: User, label: 'Profil' },
 ]
 

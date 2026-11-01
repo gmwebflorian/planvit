@@ -16,10 +16,6 @@ export interface UserProfile {
   goal_carbs_g: number | null
   goal_fat_g: number | null
   goal_fiber_g: number | null
-  strava_athlete_id: number | null
-  strava_access_token: string | null
-  strava_refresh_token: string | null
-  strava_token_expires_at: string | null
   created_at: string
   updated_at: string
 }
@@ -52,27 +48,6 @@ export interface DailySummary {
   total_fiber_g: number
   calories_burned: number
   net_calories: number
-  created_at: string
-  updated_at: string
-}
-
-export interface StravaActivity {
-  id: string
-  user_id: string
-  strava_activity_id: number
-  name: string
-  sport_type: string
-  start_date: string
-  elapsed_time_s: number
-  moving_time_s: number
-  distance_m: number | null
-  total_elevation_gain_m: number | null
-  average_heartrate: number | null
-  max_heartrate: number | null
-  calories: number | null
-  average_watts: number | null
-  kilojoules: number | null
-  raw_data: Record<string, unknown> | null
   created_at: string
   updated_at: string
 }

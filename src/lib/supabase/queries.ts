@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { UserProfile, FoodEntry, StravaActivity } from '@/types'
+import type { UserProfile, FoodEntry } from '@/types'
 
 export async function getProfile(
   supabase: SupabaseClient,
@@ -27,23 +27,6 @@ export async function getDayEntries(
   return data ?? []
 }
 
-export async function getDayStravaCalories(
-  supabase: SupabaseClient,
-  userId: string,
-  date: string
-): Promise<number> {
-  const dayStart = `${date}T00:00:00Z`
-  const dayEnd = `${date}T23:59:59Z`
-  const { data } = await supabase
-    .from('strava_activities')
-    .select('calories')
-    .eq('user_id', userId)
-    .gte('start_date', dayStart)
-    .lte('start_date', dayEnd)
-  if (!data) return 0
-  return data.reduce((sum: number, a: Pick<StravaActivity, 'calories'>) => sum + (a.calories ?? 0), 0)
-}
-
 export type PeriodEntry = Pick<FoodEntry, 'date' | 'calories' | 'protein_g' | 'carbs_g' | 'fat_g' | 'fiber_g'>
 
 export async function getPeriodEntries(
@@ -60,41 +43,6 @@ export async function getPeriodEntries(
     .lte('date', toDate)
     .order('date', { ascending: true })
   return (data ?? []) as PeriodEntry[]
-}
-
-export async function getPeriodStravaCalories(
-  supabase: SupabaseClient,
-  userId: string,
-  fromDate: string,
-  toDate: string
-): Promise<Record<string, number>> {
-  const { data } = await supabase
-    .from('strava_activities')
-    .select('start_date, calories')
-    .eq('user_id', userId)
-    .gte('start_date', `${fromDate}T00:00:00Z`)
-    .lte('start_date', `${toDate}T23:59:59Z`)
-  if (!data) return {}
-  const map: Record<string, number> = {}
-  for (const a of data as Pick<StravaActivity, 'start_date' | 'calories'>[]) {
-    const d = a.start_date.split('T')[0]
-    map[d] = (map[d] ?? 0) + (a.calories ?? 0)
-  }
-  return map
-}
-
-export async function getRecentStravaActivities(
-  supabase: SupabaseClient,
-  userId: string,
-  limit = 10
-): Promise<StravaActivity[]> {
-  const { data } = await supabase
-    .from('strava_activities')
-    .select('*')
-    .eq('user_id', userId)
-    .order('start_date', { ascending: false })
-    .limit(limit)
-  return data ?? []
 }
 
 export async function getFoodEntry(

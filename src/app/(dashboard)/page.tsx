@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { Settings } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { getProfile, getDayEntries, getDayStravaCalories } from '@/lib/supabase/queries'
+import { getProfile, getDayEntries } from '@/lib/supabase/queries'
 import CalorieRing from '@/components/CalorieRing'
 import MacroBar from '@/components/MacroBar'
 import MealSection from '@/components/MealSection'
@@ -25,10 +25,9 @@ export default async function DashboardPage() {
 
   const today = new Date().toISOString().split('T')[0]
 
-  const [profile, entries, stravaCalories] = await Promise.all([
+  const [profile, entries] = await Promise.all([
     getProfile(supabase, user.id),
     getDayEntries(supabase, user.id, today),
-    getDayStravaCalories(supabase, user.id, today),
   ])
 
   if (!profile) redirect('/login')
@@ -87,7 +86,6 @@ export default async function DashboardPage() {
         <CalorieRing
           consumed={Math.round(totalCalories)}
           goal={profile.goal_calories ?? 2000}
-          burned={Math.round(stravaCalories)}
         />
       </div>
 

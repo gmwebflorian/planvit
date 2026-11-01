@@ -25,11 +25,6 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl
   const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/api/auth')
-  const isStravaWebhook = pathname.startsWith('/api/strava/webhook')
-
-  if (isStravaWebhook) {
-    return supabaseResponse
-  }
 
   if (!user && !isAuthRoute) {
     if (pathname.startsWith('/api/')) {

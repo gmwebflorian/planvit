@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { BarChart2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
-import { getProfile, getDayEntries, getDayStravaCalories } from '@/lib/supabase/queries'
+import { getProfile, getDayEntries } from '@/lib/supabase/queries'
 import MealSection from '@/components/MealSection'
 import DateNav from './DateNav'
 import type { MealType } from '@/types'
@@ -22,10 +22,9 @@ export default async function JournalPage({
   const today = new Date().toISOString().split('T')[0]
   const date = dateParam ?? today
 
-  const [profile, entries, stravaCalories] = await Promise.all([
+  const [profile, entries] = await Promise.all([
     getProfile(supabase, user.id),
     getDayEntries(supabase, user.id, date),
-    getDayStravaCalories(supabase, user.id, date),
   ])
 
   if (!profile) redirect('/login')
@@ -36,7 +35,7 @@ export default async function JournalPage({
   const totalFat = Math.round(entries.reduce((s, e) => s + e.fat_g, 0))
 
   const goalCal = profile.goal_calories ?? 2000
-  const budget = goalCal + Math.round(stravaCalories)
+  const budget = goalCal
   const remaining = budget - totalCal
   const isOver = remaining < 0
 
@@ -74,9 +73,6 @@ export default async function JournalPage({
               </p>
               <p className="text-sm mt-0.5" style={{ color: '#6B6457' }}>
                 sur {budget.toLocaleString('fr-FR')} kcal
-                {stravaCalories > 0 && (
-                  <span style={{ color: '#22C55E' }}> (+{Math.round(stravaCalories)} Strava)</span>
-                )}
               </p>
             </div>
             <div
