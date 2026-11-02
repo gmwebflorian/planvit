@@ -47,7 +47,7 @@ function SourceBadge({ source, customLabel }: { source: 'ciqual' | 'custom'; cus
 }
 
 function normName(s: string) {
-  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/['']/g, "'")
+  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[‘’]/g, "'")
 }
 
 // Returns null for today (no need to call it out), otherwise the formatted
