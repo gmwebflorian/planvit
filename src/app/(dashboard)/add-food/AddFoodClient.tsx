@@ -47,7 +47,7 @@ function SourceBadge({ source, customLabel }: { source: 'ciqual' | 'custom'; cus
 }
 
 function normName(s: string) {
-  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[‘’]/g, "'")
+  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/['’]/g, "'")
 }
 
 // Returns null for today (no need to call it out), otherwise the formatted
@@ -156,7 +156,7 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
       const url = URL.createObjectURL(file)
       img.onload = () => {
         URL.revokeObjectURL(url)
-        const MAX = 1024
+        const MAX = 1600
         let w = img.width, h = img.height
         if (w > MAX || h > MAX) {
           if (w > h) { h = Math.round(h * MAX / w); w = MAX }
@@ -165,8 +165,11 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
         const canvas = document.createElement('canvas')
         canvas.width = w; canvas.height = h
         canvas.getContext('2d')!.drawImage(img, 0, 0, w, h)
-        const base64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1]
-        resolve({ base64, mediaType: 'image/jpeg' })
+        // PNG screenshots stay lossless so text stays readable; JPEG photos use high quality
+        const isPng = file.type === 'image/png'
+        const mimeType = isPng ? 'image/png' : 'image/jpeg'
+        const base64 = canvas.toDataURL(mimeType, isPng ? undefined : 0.92).split(',')[1]
+        resolve({ base64, mediaType: mimeType })
       }
       img.onerror = reject
       img.src = url
