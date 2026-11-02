@@ -33,7 +33,7 @@ export interface RecipeAnalysis {
   }
 }
 
-const PROMPT = `Tu es un nutritionniste expert. Analyse cette image de recette et retourne UNIQUEMENT un objet JSON valide (sans markdown, sans texte autour).
+const PROMPT = `Tu es un nutritionniste expert. Analyse cette image — cela peut être une photo de plat cuisiné, une capture d'écran de recette (Instagram, blog, application), ou une liste d'ingrédients sous forme de texte. Retourne UNIQUEMENT un objet JSON valide (sans markdown, sans texte autour).
 
 Structure attendue :
 {
@@ -60,14 +60,16 @@ Structure attendue :
 }
 
 Règles :
-- Convertis toutes les unités en grammes (1 cs ≈ 15g, 1 tasse ≈ 240ml)
+- Si l'image contient du texte (capture d'écran), lis les ingrédients directement dans le texte
+- Convertis toutes les unités en grammes (1 cs ≈ 15g, 1 cc ≈ 5g, 1 tasse ≈ 240ml, 1 verre ≈ 200ml)
 - total_weight_g = somme des quantités de tous les ingrédients
 - Les macros des ingrédients sont les totaux pour la quantité indiquée (pas pour 100g)
 - per_serving = total recette / nombre de portions
 - Si le nombre de portions n'est pas précisé, estime 4
 - Arrondis les macros à 1 décimale
 - fiber_g : estime ou mets null
-- Si une information est incertaine, estime raisonnablement`
+- Si une information est incertaine, estime raisonnablement
+- Ne réponds JAMAIS avec autre chose que le JSON, même si l'image est floue ou incomplète : estime toujours`
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()

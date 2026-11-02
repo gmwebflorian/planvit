@@ -184,13 +184,21 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image: base64, mediaType }),
       })
-      if (!res.ok) throw new Error('api_error')
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        if (body.error === 'parse_failed') {
+          setRecipeError('L\'IA n\'a pas réussi à extraire la recette. Essaie avec une image contenant les ingrédients et les quantités.')
+        } else {
+          setRecipeError('Une erreur est survenue. Vérifie ta connexion et réessaie.')
+        }
+        return
+      }
       const analysis: RecipeAnalysis = await res.json()
       setRecipeAnalysis(analysis)
       setRecipeServings(analysis.servings)
       setRecipeDishName(analysis.dish_name)
     } catch {
-      setRecipeError('Impossible d\'analyser la recette. Essaie avec une image plus nette.')
+      setRecipeError('Une erreur est survenue. Vérifie ta connexion et réessaie.')
     } finally {
       setRecipeAnalyzing(false)
     }
