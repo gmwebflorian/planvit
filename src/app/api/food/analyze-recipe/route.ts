@@ -103,6 +103,8 @@ export async function POST(request: NextRequest) {
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
   let raw: string
+  let stopReason: string | null = null
+  let contentTypes: string[] = []
   try {
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-5-5',
@@ -118,11 +120,20 @@ export async function POST(request: NextRequest) {
         ],
       }],
     })
-    raw = message.content[0].type === 'text' ? message.content[0].text : ''
-    console.log('[analyze-recipe] raw response (first 500):', raw.slice(0, 500))
+    stopReason = message.stop_reason
+    contentTypes = message.content.map(b => b.type)
+    raw = message.content
+      .filter((b): b is Anthropic.Messages.TextBlock => b.type === 'text')
+      .map(b => b.text)
+      .join('')
+    console.log('[analyze-recipe] stop_reason:', stopReason, 'content_types:', contentTypes, 'raw (first 500):', raw.slice(0, 500))
   } catch (err) {
     console.error('Claude API error:', err)
     return NextResponse.json({ error: 'ai_error' }, { status: 502 })
+  }
+
+  if (!raw) {
+    return NextResponse.json({ error: 'empty_response', stop_reason: stopReason, content_types: contentTypes }, { status: 422 })
   }
 
   let parsed: Omit<RecipeAnalysis, 'serving_weight_g' | 'per_100g'>
