@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Search, ArrowLeft, Plus, ChevronRight, Star, CalendarClock, Camera, ChefHat, Loader2, MessageSquare } from 'lucide-react'
+import { Search, ArrowLeft, Plus, ChevronRight, Star, CalendarClock, Camera, ChefHat, Loader2, MessageSquare, X } from 'lucide-react'
 import type { FoodSearchResult } from '@/app/api/food/search/route'
-import type { RecipeAnalysis } from '@/app/api/food/analyze-recipe/route'
+import type { RecipeAnalysis, RecipeIngredient } from '@/app/api/food/analyze-recipe/route'
 import type { MealType } from '@/types'
 import { addFoodEntry, createCustomFood } from '@/app/(dashboard)/actions'
 
@@ -47,7 +47,7 @@ function SourceBadge({ source, customLabel }: { source: 'ciqual' | 'custom'; cus
 }
 
 function normName(s: string) {
-  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/['']/g, "'")
+  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/['’]/g, "'")
 }
 
 // Returns null for today (no need to call it out), otherwise the formatted
@@ -110,6 +110,17 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
   const [recipeError, setRecipeError] = useState<string | null>(null)
   const [describeText, setDescribeText] = useState('')
 
+  type EditableIngredient = RecipeIngredient & { _id: string }
+  const [editedIngredients, setEditedIngredients] = useState<EditableIngredient[]>([])
+  const [macroOverride, setMacroOverride] = useState<{ kcal: number; protein_g: number; carbs_g: number; fat_g: number } | null>(null)
+  const [addingIngredient, setAddingIngredient] = useState(false)
+  const [newIngName, setNewIngName] = useState('')
+  const [newIngQty, setNewIngQty] = useState('')
+  const [newIngKcal, setNewIngKcal] = useState('')
+  const [newIngProt, setNewIngProt] = useState('')
+  const [newIngCarbs, setNewIngCarbs] = useState('')
+  const [newIngFat, setNewIngFat] = useState('')
+
   const inputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -118,6 +129,14 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
   useEffect(() => {
     if (step === 'search') inputRef.current?.focus()
   }, [step])
+
+  useEffect(() => {
+    if (recipeAnalysis) {
+      setEditedIngredients(recipeAnalysis.ingredients.map((ing, i) => ({ ...ing, _id: String(i) })))
+      setMacroOverride(null)
+      setAddingIngredient(false)
+    }
+  }, [recipeAnalysis])
 
   const search = useCallback(async (q: string) => {
     if (q.length < 2) { setAllResults([]); setDisplayCount(PAGE_SIZE); return }
@@ -229,39 +248,56 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
     }
   }
 
-  const recipePerServing = recipeAnalysis ? {
-    kcal: Math.round(recipeAnalysis.per_serving.kcal * recipeAnalysis.servings / recipeServings),
-    protein_g: Math.round(recipeAnalysis.per_serving.protein_g * recipeAnalysis.servings / recipeServings * 10) / 10,
-    carbs_g: Math.round(recipeAnalysis.per_serving.carbs_g * recipeAnalysis.servings / recipeServings * 10) / 10,
-    fat_g: Math.round(recipeAnalysis.per_serving.fat_g * recipeAnalysis.servings / recipeServings * 10) / 10,
+  const editedTotalWeight = editedIngredients.reduce((s, i) => s + i.quantity_g, 0)
+  const displayServingWeight = editedTotalWeight > 0
+    ? Math.round(editedTotalWeight / recipeServings)
+    : recipeAnalysis ? Math.round(recipeAnalysis.total_weight_g / recipeServings) : 0
+
+  const computedPerServing = recipeAnalysis ? {
+    kcal: editedIngredients.length > 0
+      ? Math.round(editedIngredients.reduce((s, i) => s + i.kcal, 0) / recipeServings)
+      : Math.round(recipeAnalysis.per_serving.kcal * recipeAnalysis.servings / recipeServings),
+    protein_g: editedIngredients.length > 0
+      ? Math.round(editedIngredients.reduce((s, i) => s + i.protein_g, 0) / recipeServings * 10) / 10
+      : Math.round(recipeAnalysis.per_serving.protein_g * recipeAnalysis.servings / recipeServings * 10) / 10,
+    carbs_g: editedIngredients.length > 0
+      ? Math.round(editedIngredients.reduce((s, i) => s + i.carbs_g, 0) / recipeServings * 10) / 10
+      : Math.round(recipeAnalysis.per_serving.carbs_g * recipeAnalysis.servings / recipeServings * 10) / 10,
+    fat_g: editedIngredients.length > 0
+      ? Math.round(editedIngredients.reduce((s, i) => s + i.fat_g, 0) / recipeServings * 10) / 10
+      : Math.round(recipeAnalysis.per_serving.fat_g * recipeAnalysis.servings / recipeServings * 10) / 10,
     fiber_g: recipeAnalysis.per_serving.fiber_g != null
       ? Math.round(recipeAnalysis.per_serving.fiber_g * recipeAnalysis.servings / recipeServings * 10) / 10
       : null,
   } : null
 
+  const activePerServing = macroOverride
+    ? { ...computedPerServing!, ...macroOverride, fiber_g: computedPerServing?.fiber_g ?? null }
+    : computedPerServing
+
   const handleRecipeConfirm = async () => {
-    if (!recipeAnalysis || !recipePerServing) return
+    if (!recipeAnalysis || !activePerServing) return
     setSaving(true)
     try {
-      const servingWeight = Math.round(recipeAnalysis.total_weight_g / recipeServings)
-      const per100 = (val: number) => Math.round(val / servingWeight * 100 * 10) / 10
+      const servingWeight = displayServingWeight || Math.round(recipeAnalysis.total_weight_g / recipeServings)
+      const per100 = (val: number) => servingWeight > 0 ? Math.round(val / servingWeight * 100 * 10) / 10 : 0
       const id = await createCustomFood({
         name: recipeDishName.trim() || recipeAnalysis.dish_name,
-        calories_per_100g: per100(recipePerServing.kcal),
-        protein_per_100g: per100(recipePerServing.protein_g),
-        carbs_per_100g: per100(recipePerServing.carbs_g),
-        fat_per_100g: per100(recipePerServing.fat_g),
-        fiber_per_100g: recipePerServing.fiber_g != null ? per100(recipePerServing.fiber_g) : null,
+        calories_per_100g: per100(activePerServing.kcal),
+        protein_per_100g: per100(activePerServing.protein_g),
+        carbs_per_100g: per100(activePerServing.carbs_g),
+        fat_per_100g: per100(activePerServing.fat_g),
+        fiber_per_100g: activePerServing.fiber_g != null ? per100(activePerServing.fiber_g) : null,
       })
       setSelected({
         id,
         name: recipeDishName.trim() || recipeAnalysis.dish_name,
         brand: null,
-        calories_per_100g: per100(recipePerServing.kcal),
-        protein_per_100g: per100(recipePerServing.protein_g),
-        carbs_per_100g: per100(recipePerServing.carbs_g),
-        fat_per_100g: per100(recipePerServing.fat_g),
-        fiber_per_100g: recipePerServing.fiber_g != null ? per100(recipePerServing.fiber_g) : null,
+        calories_per_100g: per100(activePerServing.kcal),
+        protein_per_100g: per100(activePerServing.protein_g),
+        carbs_per_100g: per100(activePerServing.carbs_g),
+        fat_per_100g: per100(activePerServing.fat_g),
+        fiber_per_100g: activePerServing.fiber_g != null ? per100(activePerServing.fiber_g) : null,
         source: 'custom',
       })
       setQty(String(servingWeight))
@@ -271,6 +307,46 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
     } finally {
       setSaving(false)
     }
+  }
+
+  const updateIngQty = (id: string, newQty: number) => {
+    setEditedIngredients(prev => prev.map(ing => {
+      if (ing._id !== id) return ing
+      const ratio = ing.quantity_g > 0 ? newQty / ing.quantity_g : 0
+      return {
+        ...ing,
+        quantity_g: newQty,
+        kcal: Math.round(ing.kcal * ratio * 10) / 10,
+        protein_g: Math.round(ing.protein_g * ratio * 10) / 10,
+        carbs_g: Math.round(ing.carbs_g * ratio * 10) / 10,
+        fat_g: Math.round(ing.fat_g * ratio * 10) / 10,
+      }
+    }))
+    setMacroOverride(null)
+  }
+
+  const updateIngName = (id: string, name: string) =>
+    setEditedIngredients(prev => prev.map(ing => ing._id === id ? { ...ing, name } : ing))
+
+  const deleteIng = (id: string) => {
+    setEditedIngredients(prev => prev.filter(i => i._id !== id))
+    setMacroOverride(null)
+  }
+
+  const confirmAddIng = () => {
+    if (!newIngName.trim()) return
+    setEditedIngredients(prev => [...prev, {
+      _id: `new-${Date.now()}`,
+      name: newIngName.trim(),
+      quantity_g: parseFloat(newIngQty) || 0,
+      kcal: parseFloat(newIngKcal) || 0,
+      protein_g: parseFloat(newIngProt) || 0,
+      carbs_g: parseFloat(newIngCarbs) || 0,
+      fat_g: parseFloat(newIngFat) || 0,
+    }])
+    setNewIngName(''); setNewIngQty(''); setNewIngKcal(''); setNewIngProt(''); setNewIngCarbs(''); setNewIngFat('')
+    setAddingIngredient(false)
+    setMacroOverride(null)
   }
 
   const handleQueryChange = (val: string) => {
@@ -569,7 +645,7 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
           </div>
         )}
 
-        {!recipeAnalyzing && !recipeError && recipeAnalysis && recipePerServing && (
+        {!recipeAnalyzing && !recipeError && recipeAnalysis && activePerServing && (
           <div className="flex flex-col gap-4 px-4 pb-6">
             {/* Dish name */}
             <div className="flex flex-col gap-1.5">
@@ -588,44 +664,152 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
               <span className="text-sm font-medium" style={{ color: '#0F0F0F' }}>Nombre de portions</span>
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => setRecipeServings((s) => Math.max(1, s - 1))}
+                  onClick={() => { setRecipeServings((s) => Math.max(1, s - 1)); setMacroOverride(null) }}
                   className="w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold"
                   style={{ backgroundColor: '#F0EBE3', color: '#0F0F0F' }}
                 >−</button>
                 <span className="w-6 text-center font-semibold tabular-nums" style={{ color: '#0F0F0F' }}>{recipeServings}</span>
                 <button
-                  onClick={() => setRecipeServings((s) => s + 1)}
+                  onClick={() => { setRecipeServings((s) => s + 1); setMacroOverride(null) }}
                   className="w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold"
                   style={{ backgroundColor: '#F0EBE3', color: '#0F0F0F' }}
                 >+</button>
               </div>
             </div>
 
-            {/* Macros per serving */}
+            {/* Macros per serving — editable */}
             <div className="rounded-2xl p-4" style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}>
               <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#6B6457' }}>
-                Par portion · {Math.round(recipeAnalysis.total_weight_g / recipeServings)}g
+                Par portion · {displayServingWeight}g
               </p>
-              <div className="flex items-center justify-between">
-                <span className="text-2xl font-bold tabular-nums" style={{ color: '#FF6B2B' }}>{recipePerServing.kcal} kcal</span>
-                <div className="flex gap-3 text-sm tabular-nums flex-wrap">
-                  <span style={{ color: '#FF6B2B' }}>{recipePerServing.protein_g}g P</span>
-                  <span style={{ color: '#3B82F6' }}>{recipePerServing.carbs_g}g G</span>
-                  <span style={{ color: '#D97706' }}>{recipePerServing.fat_g}g L</span>
-                  {recipePerServing.fiber_g != null && <span style={{ color: '#10B981' }}>{recipePerServing.fiber_g}g F</span>}
-                </div>
+              <div className="flex items-center gap-2 mb-3">
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  value={activePerServing.kcal}
+                  onChange={(e) => setMacroOverride(prev => ({ ...(prev ?? computedPerServing!), kcal: parseFloat(e.target.value) || 0 }))}
+                  className="w-20 text-xl font-bold text-center rounded-lg px-2 py-1.5 outline-none tabular-nums"
+                  style={{ backgroundColor: '#FFF1E8', color: '#FF6B2B', border: '1px solid #FFD4BB' }}
+                />
+                <span className="text-sm font-medium" style={{ color: '#FF6B2B' }}>kcal</span>
               </div>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  { key: 'protein_g', label: 'P', color: '#FF6B2B' },
+                  { key: 'carbs_g', label: 'G', color: '#3B82F6' },
+                  { key: 'fat_g', label: 'L', color: '#D97706' },
+                ] as const).map(({ key, label, color }) => (
+                  <div key={key} className="flex flex-col items-center gap-1">
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      value={activePerServing[key]}
+                      onChange={(e) => setMacroOverride(prev => ({ ...(prev ?? computedPerServing!), [key]: parseFloat(e.target.value) || 0 }))}
+                      className="w-full text-center rounded-lg px-2 py-1.5 text-sm font-semibold outline-none tabular-nums"
+                      style={{ backgroundColor: `${color}15`, color, border: `1px solid ${color}40` }}
+                    />
+                    <span className="text-xs" style={{ color: '#6B6457' }}>g {label}</span>
+                  </div>
+                ))}
+              </div>
+              {macroOverride && (
+                <button
+                  onClick={() => setMacroOverride(null)}
+                  className="mt-2 text-xs underline"
+                  style={{ color: '#9B9287' }}
+                >
+                  Réinitialiser depuis les ingrédients
+                </button>
+              )}
             </div>
 
-            {/* Ingredients list */}
+            {/* Ingredients list — editable */}
             <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}>
-              <p className="text-xs font-semibold uppercase tracking-wide px-4 pt-3 pb-2" style={{ color: '#6B6457' }}>Ingrédients détectés</p>
-              {recipeAnalysis.ingredients.map((ing, i) => (
-                <div key={i} className="flex items-center justify-between px-4 py-2" style={{ borderTop: i === 0 ? '1px solid #DDD7CC' : undefined }}>
-                  <span className="text-sm capitalize" style={{ color: '#0F0F0F' }}>{ing.name}</span>
-                  <span className="text-xs tabular-nums" style={{ color: '#6B6457' }}>{ing.quantity_g}g · {ing.kcal} kcal</span>
+              <p className="text-xs font-semibold uppercase tracking-wide px-4 pt-3 pb-2" style={{ color: '#6B6457' }}>Ingrédients</p>
+              {editedIngredients.map((ing) => (
+                <div key={ing._id} className="flex items-center gap-2 px-3 py-2" style={{ borderTop: '1px solid #F0EBE3' }}>
+                  <input
+                    type="text"
+                    value={ing.name}
+                    onChange={(e) => updateIngName(ing._id, e.target.value)}
+                    className="flex-1 min-w-0 text-sm rounded-lg px-2 py-1 outline-none"
+                    style={{ backgroundColor: '#F8F6F2', color: '#0F0F0F', border: '1px solid #DDD7CC' }}
+                  />
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    value={ing.quantity_g}
+                    onChange={(e) => updateIngQty(ing._id, parseFloat(e.target.value) || 0)}
+                    className="w-16 text-sm text-center rounded-lg px-2 py-1 outline-none tabular-nums"
+                    style={{ backgroundColor: '#F8F6F2', color: '#6B6457', border: '1px solid #DDD7CC' }}
+                  />
+                  <span className="text-xs shrink-0" style={{ color: '#9B9287' }}>g</span>
+                  <button onClick={() => deleteIng(ing._id)} className="shrink-0 p-1 rounded-full" style={{ color: '#9B9287' }}>
+                    <X size={14} />
+                  </button>
                 </div>
               ))}
+
+              {addingIngredient ? (
+                <div className="flex flex-col gap-2 px-3 py-3" style={{ borderTop: '1px solid #F0EBE3' }}>
+                  <input
+                    type="text"
+                    value={newIngName}
+                    onChange={(e) => setNewIngName(e.target.value)}
+                    placeholder="Nom de l'ingrédient"
+                    autoFocus
+                    className="w-full text-sm rounded-lg px-2 py-1.5 outline-none"
+                    style={{ backgroundColor: '#F8F6F2', color: '#0F0F0F', border: '1px solid #DDD7CC' }}
+                  />
+                  <div className="grid grid-cols-5 gap-1.5">
+                    {[
+                      { val: newIngQty, set: setNewIngQty, label: 'g' },
+                      { val: newIngKcal, set: setNewIngKcal, label: 'kcal' },
+                      { val: newIngProt, set: setNewIngProt, label: 'P' },
+                      { val: newIngCarbs, set: setNewIngCarbs, label: 'G' },
+                      { val: newIngFat, set: setNewIngFat, label: 'L' },
+                    ].map(({ val, set, label }) => (
+                      <div key={label} className="flex flex-col items-center gap-0.5">
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          value={val}
+                          onChange={(e) => set(e.target.value)}
+                          placeholder="0"
+                          className="w-full text-xs text-center rounded-lg px-1 py-1.5 outline-none"
+                          style={{ backgroundColor: '#F8F6F2', color: '#0F0F0F', border: '1px solid #DDD7CC' }}
+                        />
+                        <span className="text-[10px]" style={{ color: '#9B9287' }}>{label}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setAddingIngredient(false)}
+                      className="flex-1 py-2 rounded-xl text-sm font-medium"
+                      style={{ backgroundColor: '#F0EBE3', color: '#6B6457' }}
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      onClick={confirmAddIng}
+                      disabled={!newIngName.trim()}
+                      className="flex-1 py-2 rounded-xl text-sm font-medium disabled:opacity-50"
+                      style={{ backgroundColor: '#FF6B2B', color: '#FFFFFF' }}
+                    >
+                      Ajouter
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setAddingIngredient(true)}
+                  className="w-full flex items-center justify-center gap-1.5 py-3 text-sm font-medium"
+                  style={{ borderTop: '1px solid #F0EBE3', color: '#FF6B2B' }}
+                >
+                  <Plus size={15} /> Ajouter un ingrédient
+                </button>
+              )}
             </div>
 
             <p className="text-xs text-center px-2" style={{ color: '#9B9287' }}>
