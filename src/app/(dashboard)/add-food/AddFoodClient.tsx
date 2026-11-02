@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Search, ArrowLeft, Plus, ChevronRight, Star, CalendarClock, Camera, ChefHat, Loader2 } from 'lucide-react'
+import { Search, ArrowLeft, Plus, ChevronRight, Star, CalendarClock, Camera, ChefHat, Loader2, MessageSquare } from 'lucide-react'
 import type { FoodSearchResult } from '@/app/api/food/search/route'
 import type { RecipeAnalysis } from '@/app/api/food/analyze-recipe/route'
 import type { MealType } from '@/types'
@@ -47,7 +47,7 @@ function SourceBadge({ source, customLabel }: { source: 'ciqual' | 'custom'; cus
 }
 
 function normName(s: string) {
-  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/['’]/g, "'")
+  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/['']/g, "'")
 }
 
 // Returns null for today (no need to call it out), otherwise the formatted
@@ -84,7 +84,7 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
   // Normalized set of favorite names for O(1) lookup
   const favNameSet = useRef(new Set(favorites.map((f) => normName(f.name))))
 
-  const [step, setStep] = useState<'search' | 'quantity' | 'create' | 'recipe'>('search')
+  const [step, setStep] = useState<'search' | 'quantity' | 'create' | 'recipe' | 'describe'>('search')
   const [query, setQuery] = useState('')
   // allResults = full sorted list (favorites first, then rest); displayCount = how many we show
   const [allResults, setAllResults] = useState<FoodSearchResult[]>([])
@@ -108,6 +108,7 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
   const [recipeServings, setRecipeServings] = useState(4)
   const [recipeDishName, setRecipeDishName] = useState('')
   const [recipeError, setRecipeError] = useState<string | null>(null)
+  const [describeText, setDescribeText] = useState('')
 
   const inputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -188,12 +189,33 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
         body: JSON.stringify({ image: base64, mediaType }),
       })
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}))
-        if (body.error === 'parse_failed') {
-          setRecipeError('[DEBUG] parse_failed — réponse IA: ' + String(body.raw ?? '').slice(0, 200))
-        } else {
-          setRecipeError('[DEBUG] ' + (body.error ?? 'erreur') + ' — ' + JSON.stringify(body).slice(0, 200))
-        }
+        setRecipeError('L\'IA n\'a pas réussi à analyser l\'image. Essaie avec une photo contenant les ingrédients et les quantités.')
+        return
+      }
+      const analysis: RecipeAnalysis = await res.json()
+      setRecipeAnalysis(analysis)
+      setRecipeServings(analysis.servings)
+      setRecipeDishName(analysis.dish_name)
+    } catch {
+      setRecipeError('Une erreur est survenue. Vérifie ta connexion et réessaie.')
+    } finally {
+      setRecipeAnalyzing(false)
+    }
+  }
+
+  const handleDescribeDish = async () => {
+    if (!describeText.trim()) return
+    setRecipeError(null)
+    setRecipeAnalyzing(true)
+    setStep('recipe')
+    try {
+      const res = await fetch('/api/food/describe-dish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: describeText }),
+      })
+      if (!res.ok) {
+        setRecipeError('L\'IA n\'a pas réussi à estimer ce plat. Essaie avec plus de détails sur les ingrédients.')
         return
       }
       const analysis: RecipeAnalysis = await res.json()
@@ -477,6 +499,45 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
     )
   }
 
+  // ── Step: describe dish ────────────────────────────────────────────────
+  if (step === 'describe') {
+    return (
+      <div className="flex flex-col min-h-screen" style={{ backgroundColor: '#E8E2D6' }}>
+        <div className="flex items-center gap-3 px-4 pt-5 pb-4">
+          <button onClick={() => setStep('search')} className="p-1">
+            <ArrowLeft size={22} color="#0F0F0F" />
+          </button>
+          <span className="font-semibold text-lg" style={{ color: '#0F0F0F' }}>Décrire un plat</span>
+        </div>
+
+        <div className="flex flex-col gap-4 px-4">
+          <p className="text-sm" style={{ color: '#6B6457' }}>
+            Décris ton plat en une phrase et Claude estimera les ingrédients et les macros.
+          </p>
+          <textarea
+            value={describeText}
+            onChange={(e) => setDescribeText(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleDescribeDish() }}
+            placeholder="Ex: poulet rôti avec riz basmati et brocolis vapeur, pour 2 personnes"
+            rows={4}
+            autoFocus
+            className="rounded-xl px-4 py-3 text-base outline-none resize-none"
+            style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC', color: '#0F0F0F' }}
+          />
+          <button
+            onClick={handleDescribeDish}
+            disabled={!describeText.trim()}
+            className="w-full py-4 rounded-2xl font-bold text-lg disabled:opacity-50 flex items-center justify-center gap-2"
+            style={{ backgroundColor: '#FF6B2B', color: '#FFFFFF' }}
+          >
+            <MessageSquare size={20} />
+            Estimer les macros
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   // ── Step: recipe scan ────────────────────────────────────────────────
   if (step === 'recipe') {
     return (
@@ -601,6 +662,14 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
           <ArrowLeft size={22} color="#0F0F0F" />
         </button>
         <span className="font-semibold text-lg flex-1" style={{ color: '#0F0F0F' }}>Ajouter un aliment</span>
+        <button
+          onClick={() => { setDescribeText(''); setRecipeAnalysis(null); setRecipeError(null); setStep('describe') }}
+          className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+          style={{ backgroundColor: '#F0EBE3' }}
+          aria-label="Décrire un plat"
+        >
+          <MessageSquare size={16} color="#FF6B2B" />
+        </button>
         <button
           onClick={() => {
             setRecipeAnalysis(null); setRecipeError(null)
@@ -735,6 +804,14 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
             >
               <ChefHat size={16} color="#FF6B2B" />
               Scanner une recette
+            </button>
+            <button
+              onClick={() => { setDescribeText(''); setRecipeAnalysis(null); setRecipeError(null); setStep('describe') }}
+              className="flex items-center gap-2 px-5 py-3 rounded-2xl font-medium"
+              style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC', color: '#6B6457' }}
+            >
+              <MessageSquare size={16} color="#FF6B2B" />
+              Décrire un plat
             </button>
           </div>
         )}
