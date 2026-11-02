@@ -38,7 +38,7 @@ const PROMPT = `Tu es un nutritionniste expert. Analyse cette image — cela peu
 Structure attendue :
 {
   "dish_name": "nom du plat",
-  "servings": 4,
+  "servings": 2,
   "total_weight_g": 600,
   "ingredients": [
     {
@@ -60,16 +60,28 @@ Structure attendue :
 }
 
 Règles :
-- Si l'image contient du texte (capture d'écran), lis les ingrédients directement dans le texte
-- Convertis toutes les unités en grammes (1 cs ≈ 15g, 1 cc ≈ 5g, 1 tasse ≈ 240ml, 1 verre ≈ 200ml)
+- Si l'image contient du texte (capture d'écran), lis les ingrédients directement dans le texte — ignore les emojis et les doublons (ex: version française ET anglaise de la même liste : utilise une seule fois)
+- Convertis toutes les unités en grammes (1 càc ≈ 5g, 1 càs ≈ 15g, 1 tasse ≈ 240ml, 1 verre ≈ 200ml, 1 boîte de lardons ≈ 150g, 1 oignon ≈ 150g, 1 gousse d'ail ≈ 5g)
+- Pour les ingrédients sans quantité précisée (ex: "Gnocchi", "Parmesan", "Persil"), estime une quantité typique en grammes
 - total_weight_g = somme des quantités de tous les ingrédients
 - Les macros des ingrédients sont les totaux pour la quantité indiquée (pas pour 100g)
 - per_serving = total recette / nombre de portions
-- Si le nombre de portions n'est pas précisé, estime 4
+- Lis le nombre de portions dans le texte si précisé (ex: "2 personnes" → servings: 2), sinon estime 4
 - Arrondis les macros à 1 décimale
 - fiber_g : estime ou mets null
 - Si une information est incertaine, estime raisonnablement
-- Ne réponds JAMAIS avec autre chose que le JSON, même si l'image est floue ou incomplète : estime toujours`
+- Ne réponds JAMAIS avec autre chose que le JSON brut, même si l'image est floue ou incomplète : estime toujours`
+
+function extractJSON(raw: string): unknown {
+  // Strip markdown code fences
+  const stripped = raw.replace(/```(?:json)?\s*/gi, '').replace(/```/g, '')
+  // Find outermost JSON object
+  const match = stripped.match(/\{[\s\S]*\}/)
+  if (!match) throw new Error('no JSON')
+  // Remove trailing commas before } or ]
+  const clean = match[0].replace(/,(\s*[}\]])/g, '$1')
+  return JSON.parse(clean)
+}
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -94,7 +106,7 @@ export async function POST(request: NextRequest) {
   try {
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-5-5',
-      max_tokens: 2048,
+      max_tokens: 4096,
       messages: [{
         role: 'user',
         content: [
@@ -114,9 +126,7 @@ export async function POST(request: NextRequest) {
 
   let parsed: Omit<RecipeAnalysis, 'serving_weight_g' | 'per_100g'>
   try {
-    const match = raw.match(/\{[\s\S]*\}/)
-    if (!match) throw new Error('no JSON')
-    parsed = JSON.parse(match[0])
+    parsed = extractJSON(raw) as Omit<RecipeAnalysis, 'serving_weight_g' | 'per_100g'>
   } catch {
     return NextResponse.json({ error: 'parse_failed', raw }, { status: 422 })
   }
