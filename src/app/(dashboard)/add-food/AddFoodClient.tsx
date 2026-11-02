@@ -190,9 +190,9 @@ export default function AddFoodClient({ favorites = [] }: { favorites?: FoodSear
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
         if (body.error === 'parse_failed') {
-          setRecipeError('L\'IA n\'a pas réussi à extraire la recette. Essaie avec une image contenant les ingrédients et les quantités.')
+          setRecipeError('[DEBUG] parse_failed — réponse IA: ' + String(body.raw ?? '').slice(0, 200))
         } else {
-          setRecipeError('Une erreur est survenue. Vérifie ta connexion et réessaie.')
+          setRecipeError('[DEBUG] ' + (body.error ?? 'erreur') + ' — ' + JSON.stringify(body).slice(0, 200))
         }
         return
       }

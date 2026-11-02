@@ -107,23 +107,19 @@ export async function POST(request: NextRequest) {
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-5-5',
       max_tokens: 4096,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'image',
-              source: { type: 'base64', media_type: mediaType as 'image/jpeg' | 'image/png' | 'image/webp', data: image },
-            },
-            { type: 'text', text: PROMPT },
-          ],
-        },
-        // Prefill forces the model to continue directly with JSON, no preamble
-        { role: 'assistant', content: '{' },
-      ],
+      messages: [{
+        role: 'user',
+        content: [
+          {
+            type: 'image',
+            source: { type: 'base64', media_type: mediaType as 'image/jpeg' | 'image/png' | 'image/webp', data: image },
+          },
+          { type: 'text', text: PROMPT },
+        ],
+      }],
     })
-    const partial = message.content[0].type === 'text' ? message.content[0].text : ''
-    raw = '{' + partial
+    raw = message.content[0].type === 'text' ? message.content[0].text : ''
+    console.log('[analyze-recipe] raw response (first 500):', raw.slice(0, 500))
   } catch (err) {
     console.error('Claude API error:', err)
     return NextResponse.json({ error: 'ai_error' }, { status: 502 })
