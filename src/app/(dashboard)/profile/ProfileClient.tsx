@@ -1,19 +1,19 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { LogOut, Save, ChevronDown } from 'lucide-react'
+import { LogOut, Save, ChevronDown, Calculator } from 'lucide-react'
 import { updateProfile } from './actions'
 import { signOut } from '@/app/(auth)/actions'
 import type { UserProfile, Sex } from '@/types'
+import CalorieCalculator from './CalorieCalculator'
 
 interface Props {
   profile: UserProfile
   email: string
   bmr: number | null
-  tdee: number | null
 }
 
-type Section = 'goals' | 'data'
+type Section = 'goals' | 'calculator' | 'data'
 
 function Field({
   label,
@@ -70,7 +70,7 @@ function NumberInput({
   )
 }
 
-export default function ProfileClient({ profile, email, bmr, tdee }: Props) {
+export default function ProfileClient({ profile, email, bmr }: Props) {
   const [openSection, setOpenSection] = useState<Section | null>('goals')
   const [isPending, startTransition] = useTransition()
 
@@ -96,6 +96,18 @@ export default function ProfileClient({ profile, email, bmr, tdee }: Props) {
         goal_fat_g: goalFat ? parseInt(goalFat) : null,
         goal_fiber_g: goalFiber ? parseInt(goalFiber) : null,
       })
+    })
+  }
+
+  const applyFromCalculator = (goals: { goal_calories: number; goal_protein_g: number; goal_carbs_g: number; goal_fat_g: number; goal_fiber_g: number }) => {
+    setGoalCal(String(goals.goal_calories))
+    setGoalProt(String(goals.goal_protein_g))
+    setGoalCarbs(String(goals.goal_carbs_g))
+    setGoalFat(String(goals.goal_fat_g))
+    setGoalFiber(String(goals.goal_fiber_g))
+    setOpenSection('goals')
+    startTransition(async () => {
+      await updateProfile(goals)
     })
   }
 
@@ -192,6 +204,39 @@ export default function ProfileClient({ profile, email, bmr, tdee }: Props) {
         )}
       </div>
 
+      {/* Calorie calculator section */}
+      <div
+        className="rounded-2xl overflow-hidden"
+        style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CC' }}
+      >
+        <button
+          onClick={() => setOpenSection(openSection === 'calculator' ? null : 'calculator')}
+          className="w-full flex items-center justify-between px-5 py-4"
+        >
+          <div className="flex items-center gap-2">
+            <Calculator size={16} color="#FF6B2B" />
+            <span className="font-semibold" style={{ color: '#0F0F0F' }}>Calculatrice calorique</span>
+          </div>
+          <ChevronDown
+            size={18}
+            color="#6B6457"
+            style={{ transform: openSection === 'calculator' ? 'rotate(180deg)' : 'none', transition: '0.2s' }}
+          />
+        </button>
+
+        {openSection === 'calculator' && (
+          <div className="px-5 pb-5 pt-4 flex flex-col gap-4" style={{ borderTop: '1px solid #DDD7CC' }}>
+            <CalorieCalculator
+              sex={sex || null}
+              weightKg={weight ? parseFloat(weight) : null}
+              heightCm={height ? parseFloat(height) : null}
+              birthDate={birthDate || null}
+              onApply={applyFromCalculator}
+            />
+          </div>
+        )}
+      </div>
+
       {/* Personal data section */}
       <div
         className="rounded-2xl overflow-hidden"
@@ -248,27 +293,17 @@ export default function ProfileClient({ profile, email, bmr, tdee }: Props) {
               </Field>
             </div>
 
-            {/* BMR / TDEE display */}
-            {(bmr || tdee) && (
+            {/* BMR display */}
+            {bmr && (
               <div
-                className="rounded-xl p-4 flex flex-col gap-2"
+                className="rounded-xl p-4 flex items-center justify-between"
                 style={{ backgroundColor: '#F0EBE3' }}
               >
-                <p className="text-xs font-medium uppercase tracking-wide" style={{ color: '#6B6457' }}>
-                  Métabolisme calculé
-                </p>
-                <div className="flex justify-between">
-                  <span className="text-sm" style={{ color: '#6B6457' }}>BMR</span>
-                  <span className="text-sm font-semibold tabular-nums" style={{ color: '#0F0F0F' }}>
-                    {bmr ? `${Math.round(bmr)} kcal` : '—'}
-                  </span>
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide" style={{ color: '#6B6457' }}>Métabolisme de base (BMR)</p>
+                  <p className="text-xs mt-0.5" style={{ color: '#9B9086' }}>Mifflin-St Jeor</p>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm" style={{ color: '#6B6457' }}>TDEE (×1.375)</span>
-                  <span className="text-sm font-semibold tabular-nums" style={{ color: '#0F0F0F' }}>
-                    {tdee ? `${Math.round(tdee)} kcal` : '—'}
-                  </span>
-                </div>
+                <span className="text-lg font-bold tabular-nums" style={{ color: '#0F0F0F' }}>{Math.round(bmr)} kcal</span>
               </div>
             )}
 

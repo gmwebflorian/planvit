@@ -16,9 +16,9 @@ function calcBMR(profile: { sex: string | null; weight_kg: number | null; height
   if (!profile.sex || !profile.weight_kg || !profile.height_cm || !profile.birth_date) return null
   const age = calcAge(profile.birth_date)
   if (profile.sex === 'male') {
-    return 88.362 + 13.397 * profile.weight_kg + 4.799 * profile.height_cm - 5.677 * age
+    return 10 * profile.weight_kg + 6.25 * profile.height_cm - 5 * age + 5
   }
-  return 447.593 + 9.247 * profile.weight_kg + 3.098 * profile.height_cm - 4.330 * age
+  return 10 * profile.weight_kg + 6.25 * profile.height_cm - 5 * age - 161
 }
 
 export default async function ProfilePage() {
@@ -30,14 +30,12 @@ export default async function ProfilePage() {
   if (!profile) redirect('/login')
 
   const bmr = calcBMR(profile)
-  const tdee = bmr ? bmr * 1.375 : null
 
   return (
     <ProfileClient
       profile={profile}
       email={user.email ?? ''}
       bmr={bmr}
-      tdee={tdee}
     />
   )
 }
